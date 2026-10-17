@@ -1,0 +1,1427 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>數字好朋友</title>
+<meta name="description" content="上面一個框、下面兩個框：一年級「數的合成與分解」。平板上直接作答，也能印成練習單。">
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="數字好朋友">
+<meta name="theme-color" content="#f6f1e4" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#17201b" media="(prefers-color-scheme: dark)">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232f7d5a'/%3E%3Cpath d='M32 22 17 40M32 22 47 40' stroke='%23fff' stroke-width='4' stroke-linecap='round'/%3E%3Crect x='21' y='7' width='22' height='19' rx='5' fill='%23fff'/%3E%3Crect x='6' y='37' width='23' height='20' rx='5' fill='%23ffd166'/%3E%3Crect x='35' y='37' width='23' height='20' rx='5' fill='%23fff'/%3E%3C/svg%3E">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   外觀
+   米色紙（亮）／黑板綠（暗），跟著系統。練習單永遠是白紙黑字。
+   ═══════════════════════════════════════════════════════════════ */
+:root {
+  color-scheme: light;
+  --bg:          #f6f1e4;
+  --surface:     #fffdf8;
+  --surface-2:   #efe7d3;
+  --ink:         #24302a;
+  --ink-2:       #5d6a61;
+  --ink-3:       #959e94;
+  --line:        #ddd3bd;
+  --box:         #fffefb;
+  --box-line:    #34413a;
+  --blank:       #fff1bf;
+  --blank-line:  #d99a00;
+  --ok:          #2a9a57;
+  --ok-soft:     #d8f1e1;
+  --bad:         #d0543c;
+  --bad-soft:    #fbe1da;
+  --reveal:      #5a62c8;
+  --reveal-soft: #e4e5fa;
+  --c-L:         #3484c9;   /* 提示圓點：左下 */
+  --c-R:         #e3842a;   /* 提示圓點：右下 */
+  --c-T:         #2a9a57;   /* 減法：剩下的 */
+  --c-X:         #c0574a;   /* 減法：拿走的 */
+  --accent:      #2f7d5a;
+  --accent-ink:  #ffffff;
+  --star:        #f2b01e;
+  --star-soft:   #f7dc9a;
+  --shadow: 0 2px 0 rgba(60, 50, 20, .08), 0 6px 18px rgba(60, 50, 20, .07);
+  --sans: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+  --num:  "Nunito", ui-rounded, "Arial Rounded MT Bold", "Noto Sans TC", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg: #17201b; --surface: #202b25; --surface-2: #2a3730;
+    --ink: #edf1e7; --ink-2: #b4bdb2; --ink-3: #7d887e; --line: #3a4840;
+    --box: #243029; --box-line: #dfe6d9; --blank: #43391a; --blank-line: #f0c040;
+    --ok: #5cc98a; --ok-soft: #1d3a29; --bad: #ff8b72; --bad-soft: #45251e;
+    --reveal: #9aa1ff; --reveal-soft: #2a2c4d;
+    --c-L: #69adeb; --c-R: #f3a457; --c-T: #5cc98a; --c-X: #f08a7c;
+    --accent: #3f9a70; --star: #f6c544; --star-soft: #6b5a2a;
+    --shadow: 0 2px 0 rgba(0, 0, 0, .25), 0 8px 20px rgba(0, 0, 0, .25);
+  }
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; min-height: 100dvh; background: var(--bg); color: var(--ink); font-family: var(--sans); }
+button { font: inherit; color: inherit; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+button:disabled { cursor: default; }
+:focus-visible { outline: 3px solid var(--blank-line); outline-offset: 2px; }
+[hidden] { display: none !important; }
+a { color: var(--accent); }
+
+/* ── 注音（做法與作息鐘相同：<ruby> + 自己的字典，換裝置不用裝字型）──
+   每個漢字放進同寬的格子，像注音課本的方格。2.6em 是作息鐘量過的最寬讀音。
+   格子做在外層 span，不能直接改 <ruby> 的 display，否則注音會跑到字的右邊。 */
+ruby { ruby-align: center; }
+rt { font-size: .46em; font-weight: 400; letter-spacing: -.06em; opacity: .75; font-family: var(--sans); user-select: none; }
+.bpmf-cell, .bpmf-pad { display: inline-block; min-width: 2.6em; text-align: center; }
+
+/* ═══════════════════ 版面 ═══════════════════ */
+.app {
+  max-width: 1120px; margin: 0 auto; min-height: 100dvh;
+  display: flex; flex-direction: column; gap: 12px;
+  padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
+           max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+}
+body.printing .app { display: none; }
+
+header.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.brand > svg { width: 38px; height: 38px; flex: none; }
+.brand-txt { min-width: 0; }
+.brand h1 { margin: 0; font-size: 19px; font-weight: 900; letter-spacing: .04em; line-height: 1.3; }
+.brand .sub { font-size: 12.5px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tools { display: flex; gap: 6px; flex: none; }
+.tbtn {
+  display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 12px;
+  border-radius: 12px; border: 1.5px solid var(--line); background: var(--surface);
+  color: var(--ink-2); font-size: 14px; font-weight: 700;
+}
+.tbtn b { font-size: 16px; color: var(--ink); font-weight: 900; }
+.tbtn svg { width: 19px; height: 19px; color: var(--ink); }
+.tbtn[aria-pressed="false"] { opacity: .55; }
+.tbtn[aria-pressed="false"] b { text-decoration: line-through; text-decoration-thickness: 2px; }
+/* 手機：按鈕只留圖示並縮窄，標題才排得下一行 */
+@media (max-width: 600px) {
+  .tbtn span { display: none; }
+  .tbtn { height: 38px; padding: 0 8px; min-width: 38px; justify-content: center; }
+  .tools { gap: 4px; }
+  .brand h1 { font-size: 17px; white-space: nowrap; }
+}
+
+/* ═══════════════════ 作答畫面 ═══════════════════ */
+main.play { flex: 1; display: grid; gap: 14px 32px; align-content: start; justify-items: center; }
+@media (min-width: 820px) and (orientation: landscape) {
+  main.play { grid-template-columns: minmax(0, 1.3fr) minmax(300px, 1fr); align-content: center; align-items: center; }
+}
+.stage { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+
+.prog { list-style: none; margin: 4px 0 6px; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 7px; }
+.prog li { width: 14px; height: 14px; border-radius: 50%; background: var(--surface-2); border: 2px solid var(--line); }
+.prog li.cur   { border-color: var(--ink-2); background: var(--surface); transform: scale(1.3); }
+.prog li.first { background: var(--ok); border-color: var(--ok); }
+.prog li.retry { background: var(--star); border-color: var(--star); }
+.prog li.shown { background: var(--reveal); border-color: var(--reveal); }
+
+/* 計時挑戰：會變短的長條取代進度點，最後 10 秒變紅 */
+.timer { display: flex; align-items: center; gap: 10px; width: min(100%, 470px); margin: 4px 0 6px; }
+.tbar { flex: 1; height: 18px; border-radius: 9px; background: var(--surface-2); border: 2px solid var(--line); overflow: hidden; }
+.tfill { height: 100%; background: var(--ok); transition: width .25s linear; }
+.timer b { font-family: var(--num); font-size: 22px; font-weight: 900; min-width: 2.2em; text-align: right; }
+.timer.low .tfill { background: var(--bad); }
+.timer.low b { color: var(--bad); }
+
+.bond { width: min(100%, 470px); }
+.bond > svg { display: block; width: 100%; height: auto; max-height: 44dvh; overflow: visible; }
+.empty { text-align: center; color: var(--ink-2); font-size: 18px; line-height: 1.8; padding: 40px 12px; }
+
+/* 數字樹（三個框）—— 作答、練習單、答案頁共用同一個繪圖函式 */
+.bond-svg { overflow: visible; }
+.bond-svg .ln { stroke: var(--box-line); stroke-width: 4; stroke-linecap: round; fill: none; opacity: .7; }
+.bond-svg .bx { transform-box: fill-box; transform-origin: center; }
+.bond-svg .bx > rect:first-child { fill: var(--box); stroke: var(--box-line); stroke-width: 4; }
+.bond-svg .n  { font-family: var(--num); font-weight: 900; fill: var(--ink); }
+.bond-svg .op { font-family: var(--num); font-weight: 800; fill: var(--ink-2); }
+.bond-svg .blank > rect:first-child { fill: var(--blank); stroke: var(--blank-line); stroke-dasharray: 11 7; }
+.bond-svg .caret { fill: var(--blank-line); animation: blink 1.1s steps(1) infinite; }
+.bond-svg .blank.ok > rect:first-child { fill: var(--ok-soft); stroke: var(--ok); stroke-dasharray: none; }
+.bond-svg .blank.ok .n { fill: var(--ok); }
+.bond-svg .blank.ok { animation: pop .38s ease-out; }
+.bond-svg .blank.bad > rect:first-child { fill: var(--bad-soft); stroke: var(--bad); }
+.bond-svg .blank.bad .n { fill: var(--bad); }
+.bond-svg .blank.bad { animation: shake .42s; }
+.bond-svg .blank.reveal > rect:first-child { fill: var(--reveal-soft); stroke: var(--reveal); stroke-dasharray: none; }
+.bond-svg .blank.reveal .n { fill: var(--reveal); }
+/* 打開提示時，框的顏色對應下面的圓點 */
+.bond-svg .t-L > rect:first-child { stroke: var(--c-L); stroke-width: 5; }
+.bond-svg .t-R > rect:first-child { stroke: var(--c-R); stroke-width: 5; }
+.bond-svg .t-T > rect:first-child { stroke: var(--c-T); stroke-width: 5; }
+.bond-svg .t-X > rect:first-child { stroke: var(--c-X); stroke-width: 5; }
+@keyframes blink { 50% { opacity: 0; } }
+@keyframes pop   { 0% { transform: scale(1); } 45% { transform: scale(1.12); } 100% { transform: scale(1); } }
+@keyframes shake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-9px); } 40% { transform: translateX(8px); } 60% { transform: translateX(-6px); } 80% { transform: translateX(4px); } }
+
+.say { min-height: 2.3em; font-size: clamp(20px, 5.2vw, 28px); font-weight: 900; text-align: center; line-height: 2.3; color: var(--ink-2); }
+.say.ok { color: var(--ok); }
+.say.bad { color: var(--bad); }
+.say.reveal { color: var(--reveal); }
+
+.hint { width: 100%; display: flex; justify-content: center; }
+.hint svg { display: block; height: auto; max-width: 100%; }
+.d { stroke-width: 3; }
+.d-L { fill: var(--c-L); stroke: var(--c-L); }
+.d-R { fill: var(--c-R); stroke: var(--c-R); }
+.d-T { fill: var(--c-T); stroke: var(--c-T); }
+.d-X { fill: var(--c-X); stroke: var(--c-X); fill-opacity: .45; }
+.d.h { fill: transparent; stroke-dasharray: 4 3.4; }
+.xm  { stroke: var(--c-X); stroke-width: 3; stroke-linecap: round; }
+.dop { font-family: var(--num); font-weight: 900; font-size: 30px; fill: var(--ink-3); }
+
+.acts { display: flex; gap: 10px; justify-content: center; min-height: 54px; flex-wrap: wrap; }
+.pill {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 52px; padding: 0 22px; border-radius: 26px;
+  border: 2px solid var(--line); background: var(--surface); color: var(--ink);
+  font-weight: 900; font-size: 18px; line-height: 2.2; box-shadow: var(--shadow);
+}
+.pill svg { width: 22px; height: 22px; flex: none; }
+.pill.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.pill.glow { border-color: var(--star); animation: glow 1.5s ease-in-out infinite; }
+.pill.sm { min-height: 40px; padding: 0 14px; font-size: 15px; line-height: 1.4; border-radius: 20px; box-shadow: none; }
+.pill.big { min-height: 64px; padding: 0 34px; font-size: 22px; border-radius: 32px; }
+.pill:disabled { opacity: .45; }
+@keyframes glow { 50% { box-shadow: 0 0 0 7px color-mix(in srgb, var(--star) 35%, transparent); } }
+
+/* 數字鍵盤：1 2 3 在上（像電話，照閱讀順序） */
+.pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: min(100%, 360px); }
+.pad button {
+  height: clamp(58px, 9dvh, 78px); border-radius: 18px; border: 2px solid var(--line);
+  background: var(--surface); color: var(--ink); box-shadow: 0 4px 0 var(--line);
+  font-family: var(--num); font-weight: 900; font-size: clamp(28px, 4.6dvh, 38px);
+  display: flex; align-items: center; justify-content: center; transition: transform .05s;
+}
+.pad button:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--line); }
+.pad button svg { width: 32px; height: 32px; }
+.pad .k-del { background: var(--surface-2); }
+.pad .k-ok  { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); box-shadow: 0 4px 0 color-mix(in srgb, var(--accent) 65%, #000); }
+.pad[aria-disabled="true"] button { opacity: .4; pointer-events: none; }
+
+/* 選擇題：四個大按鈕，2×2 */
+.choices { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; width: min(100%, 360px); }
+.choices button {
+  height: clamp(68px, 11dvh, 92px); border-radius: 20px; border: 2px solid var(--line);
+  background: var(--surface); color: var(--ink); box-shadow: 0 4px 0 var(--line);
+  font-family: var(--num); font-weight: 900; font-size: clamp(34px, 5.5dvh, 46px); transition: transform .05s;
+}
+.choices button:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--line); }
+.choices button.wrong { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); box-shadow: none; opacity: .55; text-decoration: line-through; }
+.choices button.right { background: var(--ok-soft); border-color: var(--ok); color: var(--ok); }
+.choices button:disabled:not(.wrong):not(.right) { opacity: .4; }
+
+/* ═══════════════════ 一回合結束 ═══════════════════ */
+main.done {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 10px; text-align: center; padding: 8px 0 24px;
+}
+.done h2 { margin: 0; font-size: clamp(30px, 7vw, 44px); font-weight: 900; line-height: 2.1; }
+.stars { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px; max-width: 540px; }
+.stars svg { width: 32px; height: 32px; }   /* 10 顆要能排在 390px 寬的手機上同一列 */
+.star-on   { fill: var(--star); }
+.star-half { fill: var(--star-soft); }
+.star-off  { fill: var(--surface-2); stroke: var(--line); stroke-width: 1.5; }
+.score-label { font-size: 19px; font-weight: 700; color: var(--ink-2); line-height: 2.3; margin-top: 6px; }
+.score { font-family: var(--num); font-size: 68px; font-weight: 900; line-height: 1; }
+.score small { font-size: .42em; color: var(--ink-2); font-weight: 800; }
+.time { font-size: 17px; color: var(--ink-2); line-height: 2.3; }
+.allok { font-size: 24px; font-weight: 900; color: var(--ok); line-height: 2.3; }
+.review h3 { margin: 6px 0 0; font-size: 19px; color: var(--ink-2); line-height: 2.3; }
+.minis { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 18px; max-width: 640px; }
+.mini { width: 132px; }
+.mini svg { display: block; width: 100%; height: auto; }
+
+/* ═══════════════════ 設定 ═══════════════════ */
+dialog {
+  border: none; border-radius: 20px; padding: 0; width: min(580px, calc(100vw - 20px));
+  max-height: calc(100dvh - 20px); background: var(--surface); color: var(--ink);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, .35);
+}
+dialog::backdrop { background: rgba(18, 24, 20, .5); }
+.dlg { padding: 18px 20px 8px; display: flex; flex-direction: column; gap: 18px; }
+.dlg-head { display: flex; align-items: center; justify-content: space-between; }
+.dlg h2 { margin: 0; font-size: 21px; }
+.dlg h3 { margin: 0 0 9px; font-size: 14px; color: var(--ink-2); font-weight: 700; }
+.icon-btn { width: 40px; height: 40px; border-radius: 12px; border: none; background: var(--surface-2); display: flex; align-items: center; justify-content: center; }
+.icon-btn svg { width: 20px; height: 20px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  min-height: 40px; padding: 0 15px; border-radius: 20px; border: 1.5px solid var(--line);
+  background: var(--surface); font-weight: 700; font-size: 15px; color: var(--ink);
+}
+.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.chip .sym { font-family: var(--num); font-weight: 900; margin-right: 4px; }
+.rng { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-weight: 700; }
+.rng > span:first-child { width: 5.2em; color: var(--ink-2); font-size: 15px; }
+.rng input, .ptools input[type="text"], .ptools select, .linkrow input {
+  height: 40px; border: 1.5px solid var(--line); border-radius: 10px;
+  background: var(--bg); color: var(--ink); font: 800 17px var(--num); text-align: center;
+}
+.rng input { width: 5em; }
+.rng input:invalid { border-color: var(--bad); }
+.help { margin: 4px 0 0; font-size: 13px; color: var(--ink-2); line-height: 1.7; }
+.info { margin: 0; font-size: 14px; padding: 10px 13px; border-radius: 12px; background: var(--surface-2); line-height: 1.6; }
+.info.warn { background: var(--bad-soft); color: var(--bad); font-weight: 700; }
+.linkrow { display: flex; gap: 8px; }
+.linkrow input { flex: 1; min-width: 0; font: 500 13px var(--sans); text-align: left; padding: 0 10px; }
+.hist-wrap { max-height: 240px; overflow: auto; border: 1px solid var(--line); border-radius: 12px; }
+.hist { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.hist th, .hist td { text-align: left; padding: 7px 9px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.hist th { position: sticky; top: 0; background: var(--surface-2); font-weight: 700; color: var(--ink-2); }
+.hist td.num { font-family: var(--num); font-weight: 800; }
+.hist td.lbl { white-space: normal; }
+.hist .none { color: var(--ink-2); white-space: normal; }
+.link-btn { margin-top: 8px; border: none; background: none; padding: 4px 0; color: var(--ink-2); font-size: 13px; text-decoration: underline; }
+.dlg-foot {
+  position: sticky; bottom: 0; display: flex; justify-content: flex-end; gap: 8px;
+  padding: 12px 20px; background: var(--surface); border-top: 1px solid var(--line);
+}
+.dlg-foot .pill { min-height: 46px; font-size: 16px; line-height: 1.4; box-shadow: none; }
+
+/* ═══════════════════ 練習單（預覽 + 列印）═══════════════════ */
+#printView { position: fixed; inset: 0; z-index: 50; overflow: auto; background: #d8d4cb; }
+@media (prefers-color-scheme: dark) { #printView { background: #0e1411; } }
+.ptools {
+  position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; align-items: center;
+  gap: 8px 12px; padding: 10px 16px; background: var(--surface); border-bottom: 1px solid var(--line);
+}
+.ptools .ptitle { font-size: 17px; }
+.ptools .pdesc { font-size: 13px; color: var(--ink-2); }
+.ptools .grow { flex: 1; }
+.ptools label { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 700; }
+.ptools select { width: 4em; }
+.ptools input[type="text"] { width: 4.6em; }
+.ptools input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent); }
+.pnote { margin: 10px 16px 0; font-size: 13px; color: #555; text-align: center; }
+@media (prefers-color-scheme: dark) { .pnote { color: #aab3a8; } }
+#sheets { padding: 16px 0 40px; }
+
+.sheet {
+  width: 210mm; height: 296mm; margin: 0 auto 18px; padding: 12mm 14mm 9mm;
+  background: #fff; color: #111; box-shadow: 0 4px 22px rgba(0, 0, 0, .2);
+  display: flex; flex-direction: column; overflow: hidden; font-family: var(--sans);
+}
+.sh-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 6mm; border-bottom: .6mm solid #222; padding-bottom: 2mm; }
+.sh-title { font-size: 19pt; font-weight: 900; line-height: 2; white-space: nowrap; }
+.sh-sub { font-size: 11pt; color: #444; font-weight: 700; margin-left: 3mm; }
+/* 姓名／日期／答對 自己一列：和標題擠同一列會超出 A4
+   （注音格子一字 2.1em，標題＋三個欄位約 200mm，可印寬度只有 182mm） */
+.sh-fields { display: flex; justify-content: flex-end; gap: 8mm; font-size: 12pt; line-height: 2.2; white-space: nowrap; margin-top: 1.5mm; }
+.fl { display: inline-block; vertical-align: baseline; border-bottom: .3mm solid #333; width: 28mm; margin-left: 1.5mm; }
+.fl.short { width: 12mm; margin-right: 1.5mm; }
+.sh-inst { font-size: 13pt; line-height: 2.3; margin: 0 0 1mm; white-space: nowrap; }
+/* 紙上注音字級小，格子不用到 2.6em */
+.sheet .bpmf-cell, .sheet .bpmf-pad { min-width: 2.1em; }
+.sh-grid { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(4, 1fr); }
+.sh-cell { position: relative; display: flex; align-items: center; justify-content: center; }
+.sh-cell .qn { position: absolute; top: 2mm; left: 1mm; font: 800 11pt var(--num); color: #666; }
+.sh-cell svg { width: 56mm; height: auto; display: block; }
+.sh-foot { font: 700 8.5pt var(--num); color: #888; text-align: right; }
+.sheet .bond-svg .ln { stroke: #333; stroke-width: 3; opacity: 1; }
+.sheet .bond-svg .bx > rect:first-child { fill: #fff; stroke: #222; stroke-width: 3; stroke-dasharray: none; }
+.sheet .bond-svg .n  { fill: #111; }
+.sheet .bond-svg .op { fill: #333; }
+.sheet.ans .sh-grid { grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(6, 1fr); }
+.sheet.ans .sh-cell svg { width: 38mm; }
+.sheet.ans .sh-cell .qn { font-size: 9.5pt; top: 1mm; }
+.sheet.ans .bond-svg .blank > rect:first-child { stroke: #c62828; stroke-width: 4; }
+.sheet.ans .bond-svg .blank .n { fill: #c62828; }
+
+@page { size: A4; margin: 0; }
+@media print {
+  html, body { background: #fff !important; }
+  .app, dialog, .ptools, .pnote { display: none !important; }
+  #printView { position: static; overflow: visible; background: #fff; }
+  #sheets { zoom: 1 !important; padding: 0; }
+  .sheet { margin: 0; box-shadow: none; break-after: page; }
+  .sheet:last-child { break-after: auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <svg viewBox="0 0 64 64" aria-hidden="true">
+        <rect width="64" height="64" rx="14" fill="#2f7d5a"/>
+        <path d="M32 22 17 40M32 22 47 40" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+        <rect x="21" y="7" width="22" height="19" rx="5" fill="#fff"/>
+        <rect x="6" y="37" width="23" height="20" rx="5" fill="#ffd166"/>
+        <rect x="35" y="37" width="23" height="20" rx="5" fill="#fff"/>
+      </svg>
+      <div class="brand-txt">
+        <h1>數字好朋友</h1>
+        <div class="sub" id="subLabel"></div>
+      </div>
+    </div>
+    <div class="tools">
+      <button class="tbtn" id="tglBpmf" type="button" aria-pressed="true" title="注音開關"><b>ㄅ</b><span>注音</span></button>
+      <button class="tbtn" id="tglSound" type="button" aria-pressed="true" title="聲音開關"><b>♫</b><span>聲音</span></button>
+      <button class="tbtn" id="btnPrint" type="button" title="印練習單">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M6 14h12v7H6z"/></svg><span>練習單</span>
+      </button>
+      <button class="tbtn" id="btnSet" type="button" title="設定">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg><span>設定</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="play" id="play">
+    <div class="stage">
+      <ol class="prog" id="prog"></ol>
+      <div class="timer" id="timer" hidden><div class="tbar"><div class="tfill" id="tfill"></div></div><b id="tnum"></b></div>
+      <div class="bond" id="bond"></div>
+      <div class="say" id="say" aria-live="polite">&nbsp;</div>
+      <div class="hint" id="hint" hidden></div>
+      <div class="acts">
+        <button class="pill" id="btnHint" type="button" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1 2v.2h5.2v-.2c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z"/></svg><span id="hintTxt"></span>
+        </button>
+        <button class="pill primary" id="btnNext" type="button" hidden>
+          <span id="nextTxt"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="pad" id="pad" role="group" aria-label="數字鍵盤">
+      <button type="button" data-k="1">1</button>
+      <button type="button" data-k="2">2</button>
+      <button type="button" data-k="3">3</button>
+      <button type="button" data-k="4">4</button>
+      <button type="button" data-k="5">5</button>
+      <button type="button" data-k="6">6</button>
+      <button type="button" data-k="7">7</button>
+      <button type="button" data-k="8">8</button>
+      <button type="button" data-k="9">9</button>
+      <button type="button" data-k="del" class="k-del" aria-label="擦掉">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 5H9l-6 7 6 7h12a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1z"/><path d="M17.5 9.5l-5 5M12.5 9.5l5 5"/></svg>
+      </button>
+      <button type="button" data-k="0">0</button>
+      <button type="button" data-k="ok" class="k-ok" aria-label="確定">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+      </button>
+    </div>
+    <div class="choices" id="choices" role="group" aria-label="選項" hidden></div>
+  </main>
+
+  <main class="done" id="done" hidden></main>
+</div>
+
+<dialog id="setDlg" aria-labelledby="setTitle">
+  <div class="dlg">
+    <div class="dlg-head">
+      <h2 id="setTitle">設定</h2>
+      <button type="button" class="icon-btn" id="setClose" aria-label="關閉">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+
+    <section>
+      <h3>快速選擇</h3>
+      <div class="chips" id="presetBox"></div>
+    </section>
+
+    <section>
+      <h3>運算（可以複選，會混在一起出）</h3>
+      <div class="chips" id="opsBox"></div>
+    </section>
+
+    <section>
+      <h3>數字範圍</h3>
+      <div class="rng"><span>上面的數</span><input id="topMin" type="number" inputmode="numeric" min="0" max="999" required><span>到</span><input id="topMax" type="number" inputmode="numeric" min="0" max="999" required></div>
+      <div class="rng"><span>下面的數</span><input id="botMin" type="number" inputmode="numeric" min="0" max="999" required><span>到</span><input id="botMax" type="number" inputmode="numeric" min="0" max="999" required></div>
+      <p class="help">上面 ＝ 左下 ○ 右下。加法時「上面」就是總和；減法是「左下 − 右下 ＝ 上面」。<br>
+        例：10 以內加法 ＝ 上面 0 到 10、下面 1 到 10（下面從 1 開始，就不會出現 0）。</p>
+    </section>
+
+    <section>
+      <h3>空格可以出現在</h3>
+      <div class="chips" id="blanksBox"></div>
+    </section>
+
+    <section>
+      <h3>一回合</h3>
+      <div class="chips" id="countBox"></div>
+      <p class="help">選題數就是做完幾題結束；選時間是**計時挑戰**，時間內答越多越好，最後 10 秒長條變紅。</p>
+    </section>
+
+    <section>
+      <h3>作答方式</h3>
+      <div class="chips" id="modeBox"></div>
+      <p class="help">選擇題：四個選項按一個就送出，按錯的會劃掉。</p>
+    </section>
+
+    <p class="info" id="poolInfo"></p>
+
+    <section>
+      <h3>這個設定的連結</h3>
+      <div class="linkrow"><input id="linkOut" type="text" readonly aria-label="這個設定的連結"><button type="button" class="chip" id="copyLink">複製</button></div>
+      <p class="help">設定只存在這台裝置。把連結傳到 iPad 或另一台電腦打開，就是同一種題型。</p>
+    </section>
+
+    <section>
+      <h3>最近紀錄（這台裝置）</h3>
+      <div class="hist-wrap"><table class="hist" id="hist"></table></div>
+      <button type="button" class="link-btn" id="clearHist">清除紀錄</button>
+    </section>
+
+    <p class="help"><a href="../index.html">← 回到所有練習</a></p>
+  </div>
+  <div class="dlg-foot">
+    <button type="button" class="pill" id="setCancel">取消</button>
+    <button type="button" class="pill primary" id="setApply">套用，重新出題</button>
+  </div>
+</dialog>
+
+<section id="printView" hidden aria-label="練習單">
+  <div class="ptools">
+    <b class="ptitle">練習單</b>
+    <span class="pdesc" id="pDesc"></span>
+    <span class="grow"></span>
+    <label>頁數 <select id="pPages"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></label>
+    <label><input type="checkbox" id="pAns" checked> 附答案</label>
+    <label>卷號 <input type="text" id="pSeed" inputmode="numeric" maxlength="4"></label>
+    <button type="button" class="pill sm" id="pNew">換一批</button>
+    <button type="button" class="pill sm primary" id="pPrint">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M6 14h12v7H6z"/></svg>列印
+    </button>
+    <button type="button" class="pill sm" id="pClose">關閉</button>
+  </div>
+  <p class="pnote">題型跟著「設定」走，要換題型先到設定改。每頁 12 題，A4 直印。同一個卷號、同一種題型，印出來的題目一樣。</p>
+  <div id="sheets"></div>
+</section>
+
+<script>
+"use strict";
+
+/* ═══════════════════════════════════════════════════════════════
+   1. 題型
+   三個框：上面、左下、右下。關係永遠是「上面 ＝ 左下 ○ 右下」。
+   加法時上面就是總和；減法是「左下 − 右下 ＝ 上面」，乘除同理。
+   一題 = { op, left, right, top, blank }，blank 是留空的那一格。
+   ═══════════════════════════════════════════════════════════════ */
+const OPS = {
+  "+": { sym: "+", name: "加", url: "a", calc: (a, b) => a + b },
+  "-": { sym: "−", name: "減", url: "s", calc: (a, b) => a - b },
+  "*": { sym: "×", name: "乘", url: "m", calc: (a, b) => a * b },
+  "/": { sym: "÷", name: "除", url: "d", calc: (a, b) => (b !== 0 && a % b === 0 ? a / b : null) },
+};
+const OP_ORDER = ["+", "-", "*", "/"];
+const POS = ["top", "left", "right"];
+const POS_NAME = { top: "上面", left: "左下", right: "右下" };
+const POS_URL = { top: "t", left: "l", right: "r" };
+const COUNTS = [5, 10, 15, 20];
+const TIMES = [60, 120, 180];          // 計時挑戰的秒數；0 = 不計時
+const MAXN = 999;
+
+/* 快速選擇。id 也是網址參數 ?preset= 的值，入口頁靠它連過來，改名要一起改。 */
+const PRESETS = [
+  { id: "add10", name: "10 以內加法", ops: ["+"],      top: [0, 10],  bottom: [1, 10], blanks: POS },
+  { id: "pm10",  name: "10 以內加減", ops: ["+", "-"], top: [0, 10],  bottom: [1, 10], blanks: POS },
+  { id: "ten",   name: "10 的好朋友", ops: ["+"],      top: [10, 10], bottom: [1, 9],  blanks: ["left", "right"] },
+  { id: "add20", name: "20 以內加法", ops: ["+"],      top: [0, 20],  bottom: [1, 20], blanks: POS },
+  { id: "pm20",  name: "20 以內加減", ops: ["+", "-"], top: [0, 20],  bottom: [1, 20], blanks: POS },
+  { id: "mul99", name: "九九乘法",    ops: ["*"],      top: [0, 81],  bottom: [1, 9],  blanks: POS },
+];
+const presetCfg = p => ({ ops: [...p.ops], top: [...p.top], bottom: [...p.bottom], blanks: [...p.blanks] });
+const MODES = { pad: "數字鍵盤", choice: "選擇題" };
+const DEFAULTS = { ...presetCfg(PRESETS[0]), count: 10, timed: 0, mode: "pad", bpmf: true, sound: true };
+
+/** 列出所有合法的題目，依運算分組：{ "+": [...], "-": [...] } */
+function buildPool(s) {
+  const pool = {};
+  for (const op of s.ops) {
+    const f = OPS[op].calc, list = [];
+    for (let a = s.bottom[0]; a <= s.bottom[1]; a++) {
+      for (let b = s.bottom[0]; b <= s.bottom[1]; b++) {
+        const t = f(a, b);
+        if (t === null || t < s.top[0] || t > s.top[1]) continue;
+        for (const blank of s.blanks) {
+          if (solvable(op, a, b, t, blank)) list.push({ op, left: a, right: b, top: t, blank });
+        }
+      }
+    }
+    if (list.length) pool[op] = list;
+  }
+  return pool;
+}
+
+/** 答案必須只有一個。只有乘除碰到 0 會出事 */
+function solvable(op, a, b, t, blank) {
+  if (op === "*" && blank === "left"  && b === 0) return false;   // ? × 0 = 0
+  if (op === "*" && blank === "right" && a === 0) return false;   // 0 × ? = 0
+  if (op === "/" && blank === "right" && t === 0) return false;   // 0 ÷ ? = 0
+  return true;
+}
+const poolSize = pool => Object.values(pool).reduce((n, l) => n + l.length, 0);
+const answerOf = p => p[p.blank];
+const sameProblem = (x, y) => x.op === y.op && x.left === y.left && x.right === y.right && x.blank === y.blank;
+
+/** 可重現的亂數（同一個卷號 → 同一張練習單） */
+function mulberry32(seed) {
+  let t = seed >>> 0;
+  return () => {
+    t = (t + 0x6D2B79F5) >>> 0;
+    let r = Math.imul(t ^ (t >>> 15), 1 | t);
+    r = (r + Math.imul(r ^ (r >>> 7), 61 | r)) ^ r;
+    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function shuffle(arr, rng) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+/** 出 n 題。
+ *  - 複選運算時平均分配（不然題目多的運算會擠掉題目少的）。
+ *  - 同一種運算的題目抽完才會重複；相鄰兩題不會一模一樣。 */
+function makeRound(s, n, rng) {
+  const pool = buildPool(s);
+  const ops = OP_ORDER.filter(k => pool[k]);
+  if (!ops.length) return [];
+  const bags = {};
+  const draw = op => {
+    if (!bags[op] || !bags[op].length) bags[op] = shuffle(pool[op].slice(), rng);
+    return bags[op].pop();
+  };
+  const seq = shuffle(Array.from({ length: n }, (_, i) => ops[i % ops.length]), rng);
+  const out = [];
+  for (const op of seq) {
+    let p = draw(op);
+    const prev = out[out.length - 1];
+    if (prev && sameProblem(prev, p) && pool[op].length > 1) {
+      let q = draw(op), guard = 0;
+      while (sameProblem(q, p) && guard++ < 10) { bags[op].unshift(q); q = draw(op); }
+      bags[op].unshift(p);   // 放回袋底，晚一點再出
+      p = q;
+    }
+    out.push(p);
+  }
+  return out;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   2. 設定：存在這台裝置（localStorage），也可以從網址帶進來
+   網址格式：?preset=add10，或 ?ops=as&top=0-10&bottom=1-10&blank=tlr&n=10
+   （ops：a 加 s 減 m 乘 d 除；blank：t 上 l 左下 r 右下）
+   ═══════════════════════════════════════════════════════════════ */
+const LS_CFG = "kidzMath.bond.cfg.v1";
+const LS_HIST = "kidzMath.bond.history.v1";
+
+function normalize(c) {
+  const d = JSON.parse(JSON.stringify(DEFAULTS));
+  if (!c || typeof c !== "object") return d;
+  const range = (r, def) => {
+    if (!Array.isArray(r) || r.length !== 2) return def;
+    let [lo, hi] = r.map(v => Math.round(Number(v)));
+    if (!Number.isFinite(lo) || !Number.isFinite(hi)) return def;
+    lo = Math.min(MAXN, Math.max(0, lo));
+    hi = Math.min(MAXN, Math.max(0, hi));
+    return lo <= hi ? [lo, hi] : [hi, lo];
+  };
+  const ops = Array.isArray(c.ops) ? OP_ORDER.filter(k => c.ops.includes(k)) : [];
+  const blanks = Array.isArray(c.blanks) ? POS.filter(k => c.blanks.includes(k)) : [];
+  return {
+    ops: ops.length ? ops : d.ops,
+    top: range(c.top, d.top),
+    bottom: range(c.bottom, d.bottom),
+    blanks: blanks.length ? blanks : d.blanks,
+    count: COUNTS.includes(c.count) ? c.count : d.count,
+    timed: TIMES.includes(c.timed) ? c.timed : 0,
+    mode: MODES[c.mode] ? c.mode : d.mode,
+    bpmf: c.bpmf !== false,
+    sound: c.sound !== false,
+  };
+}
+function loadCfg() {
+  try { return normalize(JSON.parse(localStorage.getItem(LS_CFG) || "null")); }
+  catch (e) { return normalize(null); }
+}
+function saveCfg() {
+  try { localStorage.setItem(LS_CFG, JSON.stringify(cfg)); } catch (e) {}
+}
+
+const sameSet = (a, b) => a.length === b.length && a.every(x => b.includes(x));
+function matchPreset(s) {
+  return PRESETS.find(p =>
+    sameSet(p.ops, s.ops) && sameSet(p.blanks, s.blanks) &&
+    p.top[0] === s.top[0] && p.top[1] === s.top[1] &&
+    p.bottom[0] === s.bottom[0] && p.bottom[1] === s.bottom[1]) || null;
+}
+function opsLabel(ops) {
+  const o = OP_ORDER.filter(k => ops.includes(k));
+  return o.map(k => OPS[k].name).join("") + (o.length === 1 ? "法" : "");
+}
+function describe(s) {
+  const p = matchPreset(s);
+  return p ? p.name : `${opsLabel(s.ops)}（上面 ${s.top[0]} 到 ${s.top[1]}、下面 ${s.bottom[0]} 到 ${s.bottom[1]}）`;
+}
+
+/** 網址有帶設定就用網址的（入口頁的連結、別台裝置傳來的連結）；沒有就回傳 null */
+function cfgFromURL(base) {
+  const q = new URLSearchParams(location.search);
+  let s = null;
+  const take = () => (s = s || JSON.parse(JSON.stringify(base)));
+  const pre = PRESETS.find(p => p.id === q.get("preset"));
+  if (pre) { Object.assign(take(), presetCfg(pre)); take().timed = 0; }   // 入口頁的連結是「重新開始」，不沿用計時
+  const t = Number(q.get("t"));
+  if (TIMES.includes(t)) take().timed = t;
+  const ops = q.get("ops");
+  if (ops) take().ops = OP_ORDER.filter(k => ops.includes(OPS[k].url));
+  const pair = v => { const m = /^(\d+)-(\d+)$/.exec(v || ""); return m ? [Number(m[1]), Number(m[2])] : null; };
+  const top = pair(q.get("top")), bottom = pair(q.get("bottom"));
+  if (top) take().top = top;
+  if (bottom) take().bottom = bottom;
+  const blank = q.get("blank");
+  if (blank) take().blanks = POS.filter(k => blank.includes(POS_URL[k]));
+  const n = Number(q.get("n"));
+  if (COUNTS.includes(n)) take().count = n;
+  return s ? normalize(s) : null;
+}
+function cfgToURL(s) {
+  const q = new URLSearchParams();
+  const pre = matchPreset(s);
+  if (pre) q.set("preset", pre.id);
+  else {
+    q.set("ops", s.ops.map(k => OPS[k].url).join(""));
+    q.set("top", s.top.join("-"));
+    q.set("bottom", s.bottom.join("-"));
+    q.set("blank", s.blanks.map(k => POS_URL[k]).join(""));
+  }
+  if (s.count !== DEFAULTS.count) q.set("n", s.count);
+  if (s.timed) q.set("t", s.timed);
+  return location.href.split(/[?#]/)[0] + "?" + q.toString();
+}
+/** 標題列與紀錄用：題型 + 計時 */
+const roundLabel = s => describe(s) + (s.timed ? ` · ${s.timed / 60} 分鐘挑戰` : "");
+
+/* ═══════════════════════════════════════════════════════════════
+   3. 注音（只標小孩要讀的字；設定畫面是給大人的，不標）
+   讀音採教育部標準（台灣讀音）。「一」的變調不標，與低年級課本一致標本調。
+   查不到的字就不標 —— 寧可留白也不要標錯。
+   ═══════════════════════════════════════════════════════════════ */
+const BPMF_WORDS = {
+  "空格": "ㄎㄨㄥˋ ㄍㄜˊ",
+};
+const BPMF_CHARS = {
+  "數":"ㄕㄨˋ","字":"ㄗˋ","好":"ㄏㄠˇ","朋":"ㄆㄥˊ","友":"ㄧㄡˇ",
+  "答":"ㄉㄚˊ","對":"ㄉㄨㄟˋ","了":"˙ㄌㄜ","棒":"ㄅㄤˋ","太":"ㄊㄞˋ","厲":"ㄌㄧˋ","害":"ㄏㄞˋ",
+  "再":"ㄗㄞˋ","想":"ㄒㄧㄤˇ","看":"ㄎㄢˋ","試":"ㄕˋ","一":"ㄧ","次":"ㄘˋ",
+  "案":"ㄢˋ","是":"ㄕˋ","下":"ㄒㄧㄚˋ","題":"ㄊㄧˊ","提":"ㄊㄧˊ","示":"ㄕˋ",
+  "完":"ㄨㄢˊ","成":"ㄔㄥˊ","就":"ㄐㄧㄡˋ","用":"ㄩㄥˋ","分":"ㄈㄣ","秒":"ㄇㄧㄠˇ",
+  "玩":"ㄨㄢˊ","練":"ㄌㄧㄢˋ","習":"ㄒㄧˊ","全":"ㄑㄩㄢˊ","部":"ㄅㄨˋ",
+  "在":"ㄗㄞˋ","格":"ㄍㄜˊ","裡":"ㄌㄧˇ","填":"ㄊㄧㄢˊ","上":"ㄕㄤˋ","正":"ㄓㄥˋ","確":"ㄑㄩㄝˋ","的":"˙ㄉㄜ",
+  "姓":"ㄒㄧㄥˋ","名":"ㄇㄧㄥˊ","日":"ㄖˋ","期":"ㄑㄧˊ",
+  "時":"ㄕˊ","間":"ㄐㄧㄢ","到":"ㄉㄠˋ","鐘":"ㄓㄨㄥ"
+};
+
+/** 把一段文字切成 [字, 注音|null]；詞優先，最長比對 */
+function annotate(text) {
+  const out = [], s = String(text || "");
+  const maxWord = Math.max(2, ...Object.keys(BPMF_WORDS).map(w => w.length));
+  let i = 0;
+  while (i < s.length) {
+    let hit = null;
+    for (let len = Math.min(maxWord, s.length - i); len >= 2; len--) {
+      const w = s.slice(i, i + len);
+      if (BPMF_WORDS[w]) { hit = { w, r: BPMF_WORDS[w].split(/\s+/) }; break; }
+    }
+    if (hit) {
+      hit.w.split("").forEach((ch, k) => out.push([ch, hit.r[k] || null]));
+      i += hit.w.length;
+    } else {
+      out.push([s[i], BPMF_CHARS[s[i]] || null]);
+      i += 1;
+    }
+  }
+  return out;
+}
+const esc = s => String(s).replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+
+/** 文字 → HTML；注音開著時每個漢字進格子 */
+function bp(text, on = cfg.bpmf) {
+  if (!on) return esc(text);
+  let h = "";
+  for (const [ch, r] of annotate(text)) {
+    if (r) h += `<span class="bpmf-cell"><ruby>${esc(ch)}<rt>${r}</rt></ruby></span>`;
+    else if (/[㐀-鿿]/.test(ch)) h += `<span class="bpmf-pad">${esc(ch)}</span>`;
+    else h += esc(ch);
+  }
+  return h;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   4. 畫圖：三個框（作答、練習單、答案頁都用這一個）
+   ═══════════════════════════════════════════════════════════════ */
+const BOX = 86;
+const BOX_XY = { top: [107, 4], left: [4, 160], right: [210, 160] };
+const numSize = txt => (txt.length <= 2 ? 54 : txt.length === 3 ? 42 : 32);
+
+/** 提示時框要染的顏色（對應圓點）。加法：左藍右橘；減法：上綠（剩下）、右紅（拿走） */
+function tintOf(p) {
+  if (p.op === "+") return { left: "L", right: "R" };
+  if (p.op === "-") return { top: "T", right: "X" };
+  return {};
+}
+
+/** o.fill：空格裡顯示的字；o.state：'' | ok | bad | reveal；o.caret：顯示游標；o.tint：提示染色 */
+function bondSVG(p, o = {}) {
+  const tint = o.tint ? tintOf(p) : {};
+  let s = `<svg class="bond-svg" viewBox="0 0 300 250" role="img" aria-label="${esc(bondLabel(p, o.fill))}">`;
+  s += `<path class="ln" d="M150 90 L47 160 M150 90 L253 160"/>`;
+  for (const pos of POS) {
+    const [x, y] = BOX_XY[pos];
+    const blank = pos === p.blank;
+    const txt = blank ? String(o.fill ?? "") : String(p[pos]);
+    const cls = ["bx", blank && "blank", blank && o.state, tint[pos] && "t-" + tint[pos]].filter(Boolean).join(" ");
+    s += `<g class="${cls}"><rect x="${x}" y="${y}" width="${BOX}" height="${BOX}" rx="14"/>`;
+    if (txt) s += `<text class="n" x="${x + BOX / 2}" y="${y + BOX / 2 + 2}" font-size="${numSize(txt)}" text-anchor="middle" dominant-baseline="central">${esc(txt)}</text>`;
+    else if (blank && o.caret) s += `<rect class="caret" x="${x + BOX / 2 - 2}" y="${y + 23}" width="4" height="40" rx="2"/>`;
+    s += `</g>`;
+  }
+  s += `<text class="op" x="150" y="205" font-size="50" text-anchor="middle" dominant-baseline="central">${OPS[p.op].sym}</text>`;
+  return s + `</svg>`;
+}
+function bondLabel(p, fill) {
+  const v = pos => (pos === p.blank ? (fill ? fill : "空格") : p[pos]);
+  return `上面 ${v("top")}，左下 ${v("left")} ${OPS[p.op].sym} 右下 ${v("right")}`;
+}
+
+/* 提示：用圓點把數量畫出來（只做加減、總數 20 以內）。
+   虛線空心的點 = 要找的那一格。 */
+function hintSegments(p) {
+  if (p.op === "+") return [{ n: p.left, k: "L", hollow: p.blank === "left" }, { n: p.right, k: "R", hollow: p.blank === "right" }];
+  if (p.op === "-") return [{ n: p.top, k: "T", hollow: p.blank === "top" }, { n: p.right, k: "X", hollow: p.blank === "right" }];
+  return null;
+}
+function hintAvailable(p) {
+  const seg = p && hintSegments(p);
+  if (!seg) return false;
+  const total = seg.reduce((t, x) => t + x.n, 0);
+  return total > 0 && total <= 20;
+}
+function dotsSVG(p) {
+  const seg = hintSegments(p);
+  const P = 30, R = 11, GAP = 12;               // 每格 30、半徑 11，五個一組中間多空 12
+  const dot = (cx, cy, s) =>
+    `<circle class="d d-${s.k}${s.hollow ? " h" : ""}" cx="${cx}" cy="${cy}" r="${R}"/>` +
+    (s.k === "X" ? `<path class="xm" d="M${cx - 7} ${cy + 7}L${cx + 7} ${cy - 7}"/>` : "");
+  let out = "", W, H;
+  if (p.op === "+") {
+    // 加法：左右兩堆，各自五個一排 ——「幾個和幾個」，一眼看得出是兩個數合起來
+    const rows = seg.map(s => Math.ceil(s.n / 5));
+    H = Math.max(1, ...rows) * P;
+    let x = 0;
+    seg.forEach((s, si) => {
+      for (let k = 0; k < s.n; k++) out += dot(x + (k % 5) * P + P / 2, Math.floor(k / 5) * P + P / 2, s);
+      x += Math.min(5, s.n) * P;
+      if (si === 0) {
+        out += `<text class="dop" x="${x + 22}" y="${H / 2}" text-anchor="middle" dominant-baseline="central">+</text>`;
+        x += 44;
+      }
+    });
+    W = x;
+  } else {
+    // 減法：同一堆（左下那個數），後面幾個被劃掉 ——「拿走」。十個一排，五個一組
+    const total = seg.reduce((t, s) => t + s.n, 0);
+    const cols = Math.min(10, total);
+    W = cols * P + (cols > 5 ? GAP : 0);
+    H = Math.ceil(total / 10) * P;
+    let i = 0;
+    for (const s of seg) {
+      for (let k = 0; k < s.n; k++, i++) {
+        const col = i % 10;
+        out += dot(col * P + (col >= 5 ? GAP : 0) + P / 2, Math.floor(i / 10) * P + P / 2, s);
+      }
+    }
+  }
+  return `<svg viewBox="-3 -3 ${W + 6} ${H + 6}" style="width:${Math.round((W + 6) * 1.15)}px" role="img" aria-label="提示圓點">${out}</svg>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   5. 聲音（Web Audio 合成，不用音檔）
+   ═══════════════════════════════════════════════════════════════ */
+let actx = null;
+function tone(freq, at, dur, type = "triangle", gain = .16) {
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state === "suspended") actx.resume();
+    const t0 = actx.currentTime + at, o = actx.createOscillator(), g = actx.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(freq, t0);
+    g.gain.setValueAtTime(.0001, t0);
+    g.gain.exponentialRampToValueAtTime(gain, t0 + .012);
+    g.gain.exponentialRampToValueAtTime(.0001, t0 + dur);
+    o.connect(g).connect(actx.destination);
+    o.start(t0);
+    o.stop(t0 + dur + .05);
+  } catch (e) {}
+}
+/** 答錯：遊戲節目那種「嗶——」蜂鳴器。兩個稍微走音的鋸齒波（互相打拍產生粗糙感）＋ 低音方波，
+ *  過 600 Hz 低通免得刺耳，撐住 0.5 秒後立刻收（不淡出，蜂鳴器就是這樣停的）。 */
+function buzz(dur = .55) {
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state === "suspended") actx.resume();
+    const t0 = actx.currentTime, g = actx.createGain(), lp = actx.createBiquadFilter();
+    lp.type = "lowpass"; lp.frequency.value = 600; lp.Q.value = 1.5;
+    g.gain.setValueAtTime(.0001, t0);
+    g.gain.exponentialRampToValueAtTime(.26, t0 + .015);
+    g.gain.setValueAtTime(.26, t0 + dur - .04);
+    g.gain.exponentialRampToValueAtTime(.0001, t0 + dur);
+    for (const [f, type] of [[100, "sawtooth"], [104, "sawtooth"], [50, "square"]]) {
+      const o = actx.createOscillator();
+      o.type = type; o.frequency.setValueAtTime(f, t0);
+      o.connect(lp); o.start(t0); o.stop(t0 + dur + .05);
+    }
+    lp.connect(g).connect(actx.destination);
+  } catch (e) {}
+}
+const SFX = {
+  ok()   { tone(784, 0, .2); tone(1175, .1, .34); },                       // 叮咚
+  bad()  { buzz(); },                                                       // 嗶——
+  done() { [523, 659, 784, 1047].forEach((f, i) => tone(f, i * .12, .4)); },
+  tick()  { tone(1000, 0, .05, "triangle", .14); },                          // 倒數最後 10 秒，每秒一聲
+  tick2() { tone(1400, 0, .06, "triangle", .2); },                           // 最後 3 秒高一點
+  timeup() { tone(660, 0, .25, "triangle", .22); tone(440, .22, .55, "triangle", .22); },   // 噹—噹
+};
+const sfx = name => { if (cfg.sound) SFX[name](); };
+
+/* 選擇題的選項：答案 + 3 個鄰近的誘答。
+   乘除且空格在上面時，誘答用「鄰近的乘積」（6×7 的誘答是 36、48、35、49），不是 41、43。 */
+function makeChoices(p) {
+  const ans = answerOf(p);
+  const lim = Math.max(cfg.top[1], cfg.bottom[1], ans + 3);
+  const cand = [];
+  const add = v => { if (Number.isInteger(v) && v >= 0 && v <= lim && v !== ans && !cand.includes(v)) cand.push(v); };
+  if ((p.op === "*" || p.op === "/") && p.blank === "top") {
+    const f = OPS[p.op].calc;
+    for (const d of [1, -1, 2, -2]) { add(f(p.left + d, p.right)); add(f(p.left, p.right + d)); }
+  }
+  for (let d = 1; d <= 4; d++) { add(ans - d); add(ans + d); }
+  for (let d = 5; cand.length < 3 && d <= 12; d++) { add(ans - d); add(ans + d); }
+  const near = shuffle(cand.slice(0, 6), Math.random).slice(0, 3);
+  return shuffle([ans, ...near], Math.random);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   6. 作答
+   答錯第 1 次：再想想看；第 1 次答錯後才出現「提示」。
+   答錯第 3 次：直接告訴答案（附圓點），按「下一題」繼續 —— 不讓小孩卡死在一題。
+   ═══════════════════════════════════════════════════════════════ */
+const $ = id => document.getElementById(id);
+let cfg = loadCfg();
+{
+  const fromURL = cfgFromURL(cfg);
+  if (fromURL) { cfg = fromURL; saveCfg(); }
+}
+
+const PRAISE = ["答對了！", "好棒！", "太厲害了！"];
+const MAX_TRIES = 3;
+const play = { round: [], idx: 0, input: "", tries: 0, state: "", hint: false, results: [], t0: 0, timer: 0, choices: [], wrong: [],
+               deadline: 0, tick: 0, pausedAt: 0, lastTick: 0 };
+const cur = () => play.round[play.idx];
+const maxLen = () => String(Math.max(cfg.top[1], cfg.bottom[1])).length;
+const locked = () => play.state === "ok" || play.state === "reveal" || !cur();
+
+function newRound() {
+  clearTimeout(play.timer);
+  // 計時挑戰不知道會答幾題，先備 400 題（抽完才重複、相鄰不同的規則照舊）
+  play.round = makeRound(cfg, cfg.timed ? 400 : cfg.count, mulberry32((Math.random() * 4294967296) >>> 0));
+  play.idx = 0;
+  play.results = [];
+  play.t0 = Date.now();
+  resetQuestion();
+  $("play").hidden = false;
+  $("done").hidden = true;
+  startTimer();
+  renderAll();
+}
+
+/* ── 計時挑戰 ── */
+function startTimer() {
+  clearInterval(play.tick);
+  play.pausedAt = 0; play.lastTick = 0;
+  play.deadline = cfg.timed ? Date.now() + cfg.timed * 1000 : 0;
+  if (cfg.timed) play.tick = setInterval(renderTimer, 250);
+  renderTimer();
+}
+function pauseTimer() { if (play.deadline && !play.pausedAt && !$("play").hidden) play.pausedAt = Date.now(); }
+function resumeTimer() { if (play.pausedAt) { play.deadline += Date.now() - play.pausedAt; play.pausedAt = 0; } }
+function renderTimer() {
+  const el = $("timer");
+  el.hidden = !cfg.timed;
+  if (!cfg.timed || !play.deadline) return;
+  const left = Math.max(0, play.deadline - (play.pausedAt || Date.now()));
+  $("tfill").style.width = (100 * left / (cfg.timed * 1000)) + "%";
+  $("tnum").textContent = Math.ceil(left / 1000);
+  el.classList.toggle("low", left <= 10000);
+  const sec = Math.ceil(left / 1000);
+  if (left > 0 && left <= 10000 && sec !== play.lastTick && !play.pausedAt) { play.lastTick = sec; sfx(sec <= 3 ? "tick2" : "tick"); }
+  if (left <= 0 && !$("play").hidden) finish(true);
+}
+function resetQuestion() {
+  play.input = ""; play.tries = 0; play.state = ""; play.hint = false; play.wrong = [];
+  play.choices = cfg.mode === "choice" && cur() ? makeChoices(cur()) : [];
+  say("", "");
+}
+
+function pressDigit(d) {
+  if (locked()) return;
+  if (play.state === "bad") { play.state = ""; play.input = ""; }
+  if (play.input === "0") play.input = "";
+  if (play.input.length >= maxLen()) return;
+  play.input += d;
+  renderBond();
+}
+function pressDel() {
+  if (locked()) return;
+  if (play.state === "bad") { play.state = ""; play.input = ""; }
+  else play.input = play.input.slice(0, -1);
+  renderBond();
+}
+function submit() {
+  const p = cur();
+  if (!p) return;
+  if (play.state === "reveal") return next();
+  if (play.state === "ok" || play.state === "bad" || play.input === "") return;
+
+  if (Number(play.input) === answerOf(p)) {
+    play.state = "ok";
+    play.results[play.idx] = { p, outcome: play.tries === 0 ? "first" : "retry" };
+    sfx("ok");
+    say(play.tries === 0 ? PRAISE[Math.floor(Math.random() * PRAISE.length)] : "答對了！", "ok");
+    play.timer = setTimeout(next, 1100);
+  } else {
+    play.tries++;
+    play.wrong.push(Number(play.input));
+    sfx("bad");
+    if (play.tries >= MAX_TRIES) {
+      play.state = "reveal";
+      play.input = String(answerOf(p));
+      play.hint = hintAvailable(p);
+      play.results[play.idx] = { p, outcome: "shown" };
+      say(`答案是 ${answerOf(p)}`, "reveal");
+    } else {
+      play.state = "bad";
+      say(play.tries === 1 ? "再想想看" : "再試一次", "bad");
+    }
+  }
+  renderAll();
+}
+function next() {
+  clearTimeout(play.timer);
+  if (play.idx + 1 >= play.round.length) return finish();
+  play.idx++;
+  resetQuestion();
+  renderAll();
+}
+function finish(timeUp) {
+  clearInterval(play.tick);
+  clearTimeout(play.timer);
+  play.deadline = 0;
+  const ms = Date.now() - play.t0;
+  const R = play.results.filter(Boolean);                 // 計時到時正在做的那題不算
+  const count = k => R.filter(r => r.outcome === k).length;
+  saveHistory({ t: Date.now(), label: roundLabel(cfg), n: R.length, first: count("first"), retry: count("retry"), shown: count("shown"), ms, timed: cfg.timed });
+  sfx(timeUp ? "timeup" : "done");
+  $("play").hidden = true;
+  $("done").hidden = false;
+  renderDone(ms);
+}
+
+/* ── 畫面 ── */
+function say(text, kind) {
+  const el = $("say");
+  el.dataset.text = text;
+  el.className = "say " + (kind || "");
+  el.innerHTML = text ? bp(text) : "&nbsp;";
+}
+function renderAll() {
+  renderHeader();
+  renderProg();
+  renderBond();
+  renderHint();
+  renderActs();
+  renderInput();
+}
+function renderHeader() {
+  $("subLabel").textContent = roundLabel(cfg);
+  $("tglBpmf").setAttribute("aria-pressed", String(cfg.bpmf));
+  $("tglSound").setAttribute("aria-pressed", String(cfg.sound));
+}
+/** 數字鍵盤或選擇題，二選一 */
+function renderInput() {
+  const mc = cfg.mode === "choice";
+  $("pad").hidden = mc;
+  $("choices").hidden = !mc;
+  $("pad").setAttribute("aria-disabled", String(locked()));
+  if (!mc) return;
+  const p = cur(), ans = p ? answerOf(p) : null, done = play.state === "ok" || play.state === "reveal";
+  $("choices").innerHTML = play.choices.map(v => {
+    const wrong = play.wrong.includes(v), right = done && v === ans;
+    return `<button type="button" data-v="${v}" class="${wrong ? "wrong" : right ? "right" : ""}"${wrong || locked() ? " disabled" : ""}>${v}</button>`;
+  }).join("");
+}
+function renderProg() {
+  const ol = $("prog");
+  ol.hidden = cfg.timed > 0;                    // 計時時用長條，不用點
+  if (cfg.timed) { ol.innerHTML = ""; return; }
+  ol.innerHTML = play.round.map((_, i) => {
+    const r = play.results[i];
+    return `<li class="${r ? r.outcome : i === play.idx ? "cur" : ""}"></li>`;
+  }).join("");
+  ol.setAttribute("aria-label", play.round.length ? `第 ${play.idx + 1} 題，共 ${play.round.length} 題` : "");
+}
+function renderBond() {
+  const p = cur();
+  if (!p) {
+    $("bond").innerHTML = `<p class="empty">這個設定出不了題目。<br>請按右上角「設定」放寬數字範圍。</p>`;
+    return;
+  }
+  $("bond").innerHTML = bondSVG(p, {
+    fill: play.input, state: play.state, tint: play.hint,
+    caret: play.state === "" && play.input === "",
+  });
+}
+function renderHint() {
+  const p = cur(), show = play.hint && hintAvailable(p);
+  $("hint").hidden = !show;
+  $("hint").innerHTML = show ? dotsSVG(p) : "";
+}
+function renderActs() {
+  const p = cur();
+  const canHint = hintAvailable(p) && play.tries >= 1 && play.state !== "ok" && play.state !== "reveal";
+  $("btnHint").hidden = !canHint;
+  $("btnHint").classList.toggle("glow", canHint && play.tries >= 2 && !play.hint);
+  $("btnHint").setAttribute("aria-pressed", String(play.hint));
+  $("hintTxt").innerHTML = bp("提示");
+  $("btnNext").hidden = play.state !== "reveal";
+  $("nextTxt").innerHTML = bp("下一題");
+}
+const STAR = '<path d="M12 2.6l2.9 6 6.6.9-4.8 4.6 1.2 6.6L12 17.6l-5.9 3.1 1.2-6.6L2.5 9.5l6.6-.9z"/>';
+function durText(ms) {
+  const s = Math.max(1, Math.round(ms / 1000)), m = Math.floor(s / 60), r = s % 60;
+  return m ? `用了 ${m} 分 ${r} 秒` : `用了 ${r} 秒`;
+}
+function renderDone(ms) {
+  const R = play.results.filter(Boolean), n = R.length, timed = cfg.timed > 0;
+  const first = R.filter(r => r.outcome === "first").length;
+  const missed = R.filter(r => r.outcome !== "first");
+  const starCls = { first: "star-on", retry: "star-half", shown: "star-off" };
+  $("done").innerHTML = `
+    <h2>${bp(timed ? "時間到！" : "完成了！")}</h2>
+    <div class="stars" aria-hidden="true">${R.map(r => `<svg viewBox="0 0 24 24" class="${starCls[r.outcome]}">${STAR}</svg>`).join("")}</div>
+    ${timed ? `<div class="score-label">${bp(`${cfg.timed / 60} 分鐘答了 ${n} 題`)}</div>` : ""}
+    <div class="score-label">${bp("一次就答對")}</div>
+    <div class="score">${first}<small> / ${n}</small></div>
+    ${timed ? "" : `<div class="time">${bp(durText(ms))}</div>`}
+    ${missed.length
+      ? `<div class="review"><h3>${bp("再練習一下")}</h3><div class="minis">${missed.map(r =>
+          `<div class="mini">${bondSVG(r.p, { fill: answerOf(r.p), state: "reveal" })}</div>`).join("")}</div></div>`
+      : n ? `<div class="allok">${bp("全部答對！")}</div>` : ""}
+    <button class="pill primary big" id="btnAgain" type="button">${bp("再玩一次")}</button>`;
+  $("btnAgain").addEventListener("click", newRound);
+  $("btnAgain").focus({ preventScroll: true });
+  $("done").dataset.ms = ms;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   7. 紀錄（這台裝置）
+   ═══════════════════════════════════════════════════════════════ */
+function loadHist() {
+  try { const h = JSON.parse(localStorage.getItem(LS_HIST) || "[]"); return Array.isArray(h) ? h : []; }
+  catch (e) { return []; }
+}
+function saveHistory(entry) {
+  try { localStorage.setItem(LS_HIST, JSON.stringify([entry, ...loadHist()].slice(0, 200))); } catch (e) {}
+}
+function fmtWhen(t) {
+  const d = new Date(t), z = v => String(v).padStart(2, "0");
+  return `${d.getMonth() + 1}/${d.getDate()} ${z(d.getHours())}:${z(d.getMinutes())}`;
+}
+function fmtDur(ms) {
+  const s = Math.round(ms / 1000);
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+}
+function renderHist() {
+  const h = loadHist();
+  $("hist").innerHTML = h.length
+    ? `<thead><tr><th>時間</th><th>題型</th><th>一次就對</th><th>用時</th></tr></thead><tbody>${
+        h.slice(0, 50).map(r => `<tr><td>${fmtWhen(r.t)}</td><td class="lbl">${esc(r.label)}</td><td class="num">${r.first} / ${r.n}</td><td class="num">${fmtDur(r.ms)}</td></tr>`).join("")}</tbody>`
+    : `<tbody><tr><td class="none">還沒有紀錄。玩完一回合就會出現在這裡。</td></tr></tbody>`;
+  $("clearHist").hidden = !h.length;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   8. 設定畫面（改的是草稿，按「套用」才生效）
+   ═══════════════════════════════════════════════════════════════ */
+let draft = null;
+function openSettings() {
+  pauseTimer();
+  draft = JSON.parse(JSON.stringify(cfg));
+  renderForm();
+  renderHist();
+  $("setDlg").showModal();
+}
+function renderForm() {
+  const pre = matchPreset(draft);
+  $("presetBox").innerHTML = PRESETS.map(p =>
+    `<button type="button" class="chip" data-preset="${p.id}" aria-pressed="${pre === p}">${esc(p.name)}</button>`).join("");
+  $("opsBox").innerHTML = OP_ORDER.map(k =>
+    `<button type="button" class="chip" data-op="${k}" aria-pressed="${draft.ops.includes(k)}"><span class="sym">${OPS[k].sym}</span>${OPS[k].name}法</button>`).join("");
+  $("blanksBox").innerHTML = POS.map(k =>
+    `<button type="button" class="chip" data-blank="${k}" aria-pressed="${draft.blanks.includes(k)}">${POS_NAME[k]}</button>`).join("");
+  $("countBox").innerHTML = COUNTS.map(n =>
+    `<button type="button" class="chip" data-count="${n}" aria-pressed="${!draft.timed && draft.count === n}">${n} 題</button>`).join("") +
+    TIMES.map(t => `<button type="button" class="chip" data-timed="${t}" aria-pressed="${draft.timed === t}">⏱ ${t / 60} 分鐘</button>`).join("");
+  $("modeBox").innerHTML = Object.keys(MODES).map(m =>
+    `<button type="button" class="chip" data-mode="${m}" aria-pressed="${draft.mode === m}">${MODES[m]}</button>`).join("");
+  $("topMin").value = draft.top[0];
+  $("topMax").value = draft.top[1];
+  $("botMin").value = draft.bottom[0];
+  $("botMax").value = draft.bottom[1];
+  updateInfo();
+}
+/** 範圍欄位 → 草稿；回傳錯誤訊息或空字串 */
+function readRanges() {
+  const v = id => {
+    const el = $(id), x = Number(el.value);
+    return el.value.trim() !== "" && Number.isInteger(x) && x >= 0 && x <= MAXN ? x : null;
+  };
+  const tl = v("topMin"), th = v("topMax"), bl = v("botMin"), bh = v("botMax");
+  if ([tl, th, bl, bh].includes(null)) return `數字範圍請填 0 到 ${MAXN} 的整數。`;
+  if (tl > th || bl > bh) return "範圍的左邊要小於或等於右邊。";
+  if ((bh - bl + 1) ** 2 > 1e6) return "下面的數範圍太大了（最多 1000 個數）。";
+  draft.top = [tl, th];
+  draft.bottom = [bl, bh];
+  return "";
+}
+function updateInfo() {
+  const el = $("poolInfo"), apply = $("setApply");
+  const warn = msg => { el.textContent = msg; el.className = "info warn"; apply.disabled = true; $("linkOut").value = ""; };
+  const err = readRanges();
+  if (err) return warn(err);
+  if (!draft.ops.length) return warn("至少要選一種運算。");
+  if (!draft.blanks.length) return warn("空格至少要能出現在一個地方。");
+  const pool = buildPool(draft), n = poolSize(pool);
+  if (!n) return warn("這個設定出不了題目，請放寬數字範圍。");
+  let msg = `這個設定共有 ${n} 種不同的題目`;
+  msg += n < draft.count ? `，比一回合的 ${draft.count} 題少，題目會重複。` : "。";
+  const none = draft.ops.filter(k => !pool[k]);
+  if (none.length) msg += `（${none.map(k => OPS[k].name + "法").join("、")}在這個範圍出不了題。）`;
+  el.textContent = msg;
+  el.className = "info";
+  apply.disabled = false;
+  $("linkOut").value = cfgToURL(draft);
+  const pre = matchPreset(draft);
+  for (const b of $("presetBox").children) b.setAttribute("aria-pressed", String(!!pre && b.dataset.preset === pre.id));
+}
+function applySettings() {
+  if (readRanges()) return;
+  const next = normalize({ ...draft, bpmf: cfg.bpmf, sound: cfg.sound });
+  const changed = JSON.stringify(next) !== JSON.stringify(cfg);
+  $("setDlg").close();
+  if (!changed) return;
+  cfg = next;
+  saveCfg();
+  newRound();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   9. 練習單（每頁 12 題，A4；答案頁每頁 24 題）
+   ═══════════════════════════════════════════════════════════════ */
+const PER_PAGE = 12, ANS_PER_PAGE = 24;
+const pv = { pages: 1, answers: true, seed: 0 };
+const newSeed = () => 1000 + Math.floor(Math.random() * 9000);
+
+function openPrint() {
+  pauseTimer();
+  if (!pv.seed) pv.seed = newSeed();
+  renderSheets();
+  $("printView").hidden = false;
+  document.body.classList.add("printing");
+  fitSheets();
+}
+function closePrint() {
+  $("printView").hidden = true;
+  document.body.classList.remove("printing");
+  resumeTimer();
+}
+/** 螢幕比 A4 窄時整份縮小預覽；列印時 @media print 會把縮放拿掉 */
+function fitSheets() {
+  $("sheets").style.zoom = String(Math.min(1, (window.innerWidth - 24) / 794));
+}
+function renderSheets() {
+  $("pDesc").textContent = describe(cfg);
+  $("pPages").value = String(pv.pages);
+  $("pAns").checked = pv.answers;
+  $("pSeed").value = String(pv.seed);
+  const n = pv.pages * PER_PAGE;
+  const list = makeRound(cfg, n, mulberry32(Math.imul(pv.seed, 2654435761) >>> 0));
+  if (!list.length) {
+    $("sheets").innerHTML = `<section class="sheet"><p class="empty">這個設定出不了題目，請先到「設定」放寬數字範圍。</p></section>`;
+    return;
+  }
+  let html = "";
+  for (let pg = 0; pg < pv.pages; pg++) html += sheetHTML(list.slice(pg * PER_PAGE, (pg + 1) * PER_PAGE), pg * PER_PAGE, pg + 1);
+  if (pv.answers) for (let i = 0; i < n; i += ANS_PER_PAGE) html += answerHTML(list.slice(i, i + ANS_PER_PAGE), i);
+  $("sheets").innerHTML = html;
+}
+function sheetHTML(list, offset, pageNo) {
+  return `<section class="sheet">
+    <div class="sh-head"><div class="sh-title">${bp("數字好朋友")}<span class="sh-sub">${esc(describe(cfg))}</span></div></div>
+    <div class="sh-fields"><span>${bp("姓名")}<i class="fl"></i></span><span>${bp("日期")}<i class="fl"></i></span><span>${bp("答對")}<i class="fl short"></i>${bp("題")}</span></div>
+    <div class="sh-inst">${bp("在空格裡填上正確的數字。")}</div>
+    <div class="sh-grid">${list.map((p, i) => `<div class="sh-cell"><span class="qn">${offset + i + 1}</span>${bondSVG(p)}</div>`).join("")}</div>
+    <div class="sh-foot">卷號 ${pv.seed} · 第 ${pageNo} 頁，共 ${pv.pages} 頁</div>
+  </section>`;
+}
+function answerHTML(list, offset) {
+  return `<section class="sheet ans">
+    <div class="sh-head">
+      <div class="sh-title">答案<span class="sh-sub">${esc(describe(cfg))}</span></div>
+      <div class="sh-fields"><span>卷號 ${pv.seed}</span></div>
+    </div>
+    <div class="sh-grid">${list.map((p, i) => `<div class="sh-cell"><span class="qn">${offset + i + 1}</span>${bondSVG(p, { fill: answerOf(p) })}</div>`).join("")}</div>
+  </section>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   10. 事件
+   ═══════════════════════════════════════════════════════════════ */
+$("pad").addEventListener("click", e => {
+  const b = e.target.closest("button[data-k]");
+  if (!b) return;
+  const k = b.dataset.k;
+  if (k === "del") pressDel();
+  else if (k === "ok") submit();
+  else pressDigit(k);
+});
+$("btnHint").addEventListener("click", () => { play.hint = !play.hint; renderBond(); renderHint(); renderActs(); });
+$("btnNext").addEventListener("click", next);
+
+document.addEventListener("keydown", e => {
+  if ($("setDlg").open || !$("printView").hidden) return;
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (!$("done").hidden) {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); newRound(); }
+    return;
+  }
+  if (/^[0-9]$/.test(e.key)) { e.preventDefault(); pressDigit(e.key); }
+  else if (e.key === "Backspace" || e.key === "Delete") { e.preventDefault(); pressDel(); }
+  else if (e.key === "Enter" || e.key === " ") { e.preventDefault(); submit(); }
+});
+
+$("tglBpmf").addEventListener("click", () => {
+  cfg.bpmf = !cfg.bpmf;
+  saveCfg();
+  const el = $("say");
+  el.innerHTML = el.dataset.text ? bp(el.dataset.text) : "&nbsp;";
+  renderAll();
+  if (!$("done").hidden) renderDone(Number($("done").dataset.ms) || 0);
+});
+$("tglSound").addEventListener("click", () => {
+  cfg.sound = !cfg.sound;
+  saveCfg();
+  renderHeader();
+  sfx("ok");   // 打開時順便試聽一下
+});
+$("choices").addEventListener("click", e => {
+  const b = e.target.closest("button[data-v]");
+  if (!b || locked()) return;
+  if (play.state === "bad") play.state = "";
+  play.input = b.dataset.v;
+  renderBond();
+  submit();
+});
+
+/* 設定 */
+$("btnSet").addEventListener("click", openSettings);
+$("setClose").addEventListener("click", () => $("setDlg").close());
+$("setCancel").addEventListener("click", () => $("setDlg").close());
+$("setApply").addEventListener("click", applySettings);
+$("setDlg").addEventListener("click", e => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  const toggle = (arr, v) => (arr.includes(v) ? arr.filter(x => x !== v) : [...arr, v]);
+  if (b.dataset.preset) {
+    Object.assign(draft, presetCfg(PRESETS.find(p => p.id === b.dataset.preset)));
+    renderForm();
+  } else if (b.dataset.op) {
+    draft.ops = OP_ORDER.filter(k => toggle(draft.ops, b.dataset.op).includes(k));
+    renderForm();
+  } else if (b.dataset.blank) {
+    draft.blanks = POS.filter(k => toggle(draft.blanks, b.dataset.blank).includes(k));
+    renderForm();
+  } else if (b.dataset.count) {
+    draft.count = Number(b.dataset.count);
+    draft.timed = 0;
+    renderForm();
+  } else if (b.dataset.timed) {
+    draft.timed = Number(b.dataset.timed);
+    renderForm();
+  } else if (b.dataset.mode) {
+    draft.mode = b.dataset.mode;
+    renderForm();
+  }
+});
+$("setDlg").addEventListener("close", resumeTimer);
+for (const id of ["topMin", "topMax", "botMin", "botMax"]) $(id).addEventListener("input", updateInfo);
+$("copyLink").addEventListener("click", async () => {
+  const inp = $("linkOut");
+  if (!inp.value) return;
+  try { await navigator.clipboard.writeText(inp.value); }
+  catch (e) { inp.select(); document.execCommand && document.execCommand("copy"); }
+  $("copyLink").textContent = "已複製";
+  setTimeout(() => { $("copyLink").textContent = "複製"; }, 1500);
+});
+$("clearHist").addEventListener("click", () => {
+  if (!confirm("確定要清除這台裝置上的所有紀錄嗎？")) return;
+  try { localStorage.removeItem(LS_HIST); } catch (e) {}
+  renderHist();
+});
+
+/* 練習單 */
+$("btnPrint").addEventListener("click", openPrint);
+$("pClose").addEventListener("click", closePrint);
+$("pPrint").addEventListener("click", () => window.print());
+$("pNew").addEventListener("click", () => { pv.seed = newSeed(); renderSheets(); });
+$("pPages").addEventListener("change", e => { pv.pages = Number(e.target.value) || 1; renderSheets(); });
+$("pAns").addEventListener("change", e => { pv.answers = e.target.checked; renderSheets(); });
+$("pSeed").addEventListener("change", e => {
+  const v = parseInt(e.target.value, 10);
+  if (v >= 1 && v <= 9999) pv.seed = v;
+  renderSheets();
+});
+window.addEventListener("resize", () => { if (!$("printView").hidden) fitSheets(); });
+/* 在作答畫面直接按 Ctrl+P：自動換成練習單再印，不會印出一張空白 */
+window.addEventListener("beforeprint", () => { if ($("printView").hidden) openPrint(); });
+
+newRound();
+if (location.hash === "#print") openPrint();</script>
+</body>
+</html>

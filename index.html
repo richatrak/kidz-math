@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>數學練習</title>
+<meta name="description" content="給低年級小孩的數學練習小程式。平板上直接作答，也能印成練習單。">
+<meta name="theme-color" content="#f6f1e4" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#17201b" media="(prefers-color-scheme: dark)">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232f7d5a'/%3E%3Ctext x='32' y='44' font-family='Arial Rounded MT Bold,Arial' font-weight='900' font-size='34' text-anchor='middle' fill='%23fff'%3E%2B%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@800;900&family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* 入口頁：依年級、主題列出各種題型。同一支程式用不同參數，年級只是這頁的分組。 */
+:root {
+  color-scheme: light;
+  --bg: #f6f1e4; --surface: #fffdf8; --surface-2: #efe7d3;
+  --ink: #24302a; --ink-2: #5d6a61; --ink-3: #959e94; --line: #ddd3bd;
+  --accent: #2f7d5a; --accent-ink: #fff; --tag: #e4efe8; --tag-ink: #2f7d5a;
+  --shadow: 0 2px 0 rgba(60, 50, 20, .08), 0 6px 18px rgba(60, 50, 20, .07);
+  --sans: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+  --num: "Nunito", ui-rounded, "Arial Rounded MT Bold", "Noto Sans TC", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg: #17201b; --surface: #202b25; --surface-2: #2a3730;
+    --ink: #edf1e7; --ink-2: #b4bdb2; --ink-3: #7d887e; --line: #3a4840;
+    --accent: #3f9a70; --tag: #1d3a29; --tag-ink: #8fd4b0;
+    --shadow: 0 2px 0 rgba(0, 0, 0, .25), 0 8px 20px rgba(0, 0, 0, .25);
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); line-height: 1.6; }
+.wrap { max-width: 820px; margin: 0 auto; padding: max(20px, env(safe-area-inset-top)) 16px 48px; }
+header { display: flex; align-items: center; gap: 14px; margin-bottom: 6px; }
+header svg { width: 48px; height: 48px; flex: none; }
+h1 { margin: 0; font-size: 26px; font-weight: 900; letter-spacing: .04em; }
+.lead { margin: 0; color: var(--ink-2); font-size: 15px; }
+section { margin-top: 30px; }
+h2 { margin: 0 0 12px; font-size: 14px; font-weight: 700; color: var(--ink-2); letter-spacing: .12em; display: flex; align-items: center; gap: 10px; }
+h2::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+a.card {
+  display: block; padding: 16px 18px 14px; border-radius: 18px; color: inherit; text-decoration: none;
+  background: var(--surface); border: 1.5px solid var(--line); box-shadow: var(--shadow);
+  transition: transform .08s, border-color .08s;
+}
+a.card:hover, a.card:focus-visible { transform: translateY(-2px); border-color: var(--accent); outline: none; }
+a.card:active { transform: translateY(1px); }
+.card b { display: block; font-size: 21px; font-weight: 900; line-height: 1.4; }
+.card .ex { font-family: var(--num); font-weight: 900; font-size: 15px; color: var(--accent); margin-top: 2px; letter-spacing: .04em; }
+.card span.d { display: block; font-size: 13.5px; color: var(--ink-2); margin-top: 6px; }
+.card .app { display: inline-block; margin-top: 10px; padding: 2px 9px; border-radius: 10px; background: var(--tag); color: var(--tag-ink); font-size: 12px; font-weight: 700; }
+.tips { margin-top: 36px; padding: 16px 18px; border-radius: 16px; background: var(--surface-2); font-size: 14px; color: var(--ink-2); }
+.tips h3 { margin: 0 0 6px; font-size: 14px; color: var(--ink); }
+.tips ul { margin: 0; padding-left: 1.3em; }
+.tips li + li { margin-top: 4px; }
+footer { margin-top: 28px; font-size: 13px; color: var(--ink-3); }
+footer a { color: var(--ink-2); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#2f7d5a"/><text x="32" y="45" font-family="Nunito, Arial Rounded MT Bold, Arial" font-weight="900" font-size="36" text-anchor="middle" fill="#fff">+</text></svg>
+    <div>
+      <h1>數學練習</h1>
+      <p class="lead">給家裡小孩用的小程式。平板上直接作答，也能印成練習單。</p>
+    </div>
+  </header>
+
+  <section>
+    <h2>一年級</h2>
+    <div class="cards">
+      <a class="card" href="bond/index.html?preset=add10">
+        <b>10 以內加法</b>
+        <div class="ex">3 + 4 = ?</div>
+        <span class="d">上面一個數、下面兩個數。空格可能在任何一格，下面空著時要想「幾加幾」。</span>
+        <span class="app">數字好朋友</span>
+      </a>
+      <a class="card" href="bond/index.html?preset=ten">
+        <b>10 的好朋友</b>
+        <div class="ex">10 = 7 + ?</div>
+        <span class="d">上面固定是 10，練「幾和幾湊成 10」。</span>
+        <span class="app">數字好朋友</span>
+      </a>
+      <a class="card" href="bond/index.html?preset=pm10">
+        <b>10 以內加減</b>
+        <div class="ex">9 − 4 = ?</div>
+        <span class="d">加法和減法混著出，一半一半。</span>
+        <span class="app">數字好朋友</span>
+      </a>
+      <a class="card" href="bond/index.html?preset=add20">
+        <b>20 以內加法</b>
+        <div class="ex">8 + 7 = ?</div>
+        <span class="d">會進位的加法。</span>
+        <span class="app">數字好朋友</span>
+      </a>
+      <a class="card" href="bond/index.html?preset=pm20">
+        <b>20 以內加減</b>
+        <div class="ex">15 − 6 = ?</div>
+        <span class="d">進位與退位，加減混著出。</span>
+        <span class="app">數字好朋友</span>
+      </a>
+    </div>
+  </section>
+
+  <section>
+    <h2>二年級</h2>
+    <div class="cards">
+      <a class="card" href="bond/index.html?preset=mul99">
+        <b>九九乘法</b>
+        <div class="ex">6 × 7 = ?</div>
+        <span class="d">1 到 9 的乘法，空格也可能在下面（幾乘 7 等於 42）。</span>
+        <span class="app">數字好朋友</span>
+      </a>
+    </div>
+  </section>
+
+  <section>
+    <h2>自己設定</h2>
+    <div class="cards">
+      <a class="card" href="bond/index.html">
+        <b>數字好朋友</b>
+        <div class="ex">＋ − × ÷</div>
+        <span class="d">進去按右上角「設定」：運算可複選、數字範圍自己填、空格位置、一回合幾題。</span>
+        <span class="app">自訂題型</span>
+      </a>
+    </div>
+  </section>
+
+  <div class="tips">
+    <h3>小提醒</h3>
+    <ul>
+      <li>手機或平板用瀏覽器的「加入主畫面」，就像一個 App。</li>
+      <li>每個練習裡右上角有「練習單」：一頁 12 題、A4 直印，可附答案頁。</li>
+      <li>設定與紀錄只存在那一台裝置上，不會上傳。</li>
+    </ul>
+  </div>
+
+  <footer>另一個小工具：<a href="https://schedule.kidz.tw">作息鐘</a>（在家照學校作息打鐘）</footer>
+</div>
+</body>
+</html>
