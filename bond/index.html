@@ -114,6 +114,7 @@ header.top { display: flex; align-items: center; justify-content: space-between;
   .tbtn span { display: none; }
   .tbtn { height: 38px; padding: 0 8px; min-width: 38px; justify-content: center; }
   .tools { gap: 4px; }
+  .brand > svg { display: none; }               /* 名牌佔掉的寬度從圖示拿回來，標題才不會被截掉 */
   .brand h1 { font-size: 17px; white-space: nowrap; }
 }
 
@@ -294,6 +295,27 @@ dialog::backdrop { background: rgba(18, 24, 20, .5); }
 }
 .dlg-foot .pill { min-height: 46px; font-size: 16px; line-height: 1.4; box-shadow: none; }
 
+/* ═══════════════════ 誰在玩（profile）═══════════════════ */
+.who-chip { gap: 7px; padding: 0 12px 0 10px; }
+.who-chip .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--ink-3); flex: none; }
+.who-chip b { font-size: 14px; max-width: 6em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.who-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 10px; }
+.who {
+  display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px 8px 12px;
+  border-radius: 16px; border: 2px solid var(--line); background: var(--surface);
+  font: inherit; font-weight: 900; font-size: 17px; color: var(--ink); line-height: 2.2; cursor: pointer;
+}
+.who[aria-current="true"] { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent); }
+.who .av {
+  width: 54px; height: 54px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  color: #fff; font-family: var(--num); font-size: 26px; font-weight: 900; line-height: 1;
+}
+.who.add .av { background: var(--surface-2); color: var(--ink-2); border: 2px dashed var(--line); }
+.who .ops { display: flex; gap: 6px; }
+.who .ops .chip { min-height: 32px; padding: 0 10px; font-size: 13px; }
+.who-form { display: flex; gap: 8px; align-items: center; margin-top: 12px; }
+.who-form input { flex: 1; min-width: 0; height: 46px; border: 1.5px solid var(--line); border-radius: 12px; background: var(--bg); color: var(--ink); font: 700 18px var(--sans); padding: 0 12px; }
+
 /* ═══════════════════ 練習單（預覽 + 列印）═══════════════════ */
 #printView { position: fixed; inset: 0; z-index: 50; overflow: auto; background: #d8d4cb; }
 @media (prefers-color-scheme: dark) { #printView { background: #0e1411; } }
@@ -323,7 +345,7 @@ dialog::backdrop { background: rgba(18, 24, 20, .5); }
 /* 姓名／日期／答對 自己一列：和標題擠同一列會超出 A4
    （注音格子一字 2.1em，標題＋三個欄位約 200mm，可印寬度只有 182mm） */
 .sh-fields { display: flex; justify-content: flex-end; gap: 8mm; font-size: 12pt; line-height: 2.2; white-space: nowrap; margin-top: 1.5mm; }
-.fl { display: inline-block; vertical-align: baseline; border-bottom: .3mm solid #333; width: 28mm; margin-left: 1.5mm; }
+.fl { display: inline-block; vertical-align: baseline; border-bottom: .3mm solid #333; width: 28mm; margin-left: 1.5mm; text-align: center; font-style: normal; font-weight: 700; }
 .fl.short { width: 12mm; margin-right: 1.5mm; }
 .sh-inst { font-size: 13pt; line-height: 2.3; margin: 0 0 1mm; white-space: nowrap; }
 /* 紙上注音字級小，格子不用到 2.6em */
@@ -376,6 +398,7 @@ dialog::backdrop { background: rgba(18, 24, 20, .5); }
       </div>
     </div>
     <div class="tools">
+      <button class="tbtn who-chip" id="btnWho" type="button" title="換人"><i class="dot" id="whoDot"></i><b id="whoLabel">…</b></button>
       <button class="tbtn" id="tglBpmf" type="button" aria-pressed="true" title="注音開關"><b>ㄅ</b><span>注音</span></button>
       <button class="tbtn" id="tglSound" type="button" aria-pressed="true" title="聲音開關"><b>♫</b><span>聲音</span></button>
       <button class="tbtn" id="btnPrint" type="button" title="印練習單">
@@ -476,11 +499,11 @@ dialog::backdrop { background: rgba(18, 24, 20, .5); }
     <section>
       <h3>這個設定的連結</h3>
       <div class="linkrow"><input id="linkOut" type="text" readonly aria-label="這個設定的連結"><button type="button" class="chip" id="copyLink">複製</button></div>
-      <p class="help">設定只存在這台裝置。把連結傳到 iPad 或另一台電腦打開，就是同一種題型。</p>
+      <p class="help">設定是這個人、這台裝置的。把連結傳到 iPad 或另一台電腦打開，就是同一種題型。</p>
     </section>
 
     <section>
-      <h3>最近紀錄（這台裝置）</h3>
+      <h3 id="histTitle">最近紀錄</h3>
       <div class="hist-wrap"><table class="hist" id="hist"></table></div>
       <button type="button" class="link-btn" id="clearHist">清除紀錄</button>
     </section>
@@ -490,6 +513,25 @@ dialog::backdrop { background: rgba(18, 24, 20, .5); }
   <div class="dlg-foot">
     <button type="button" class="pill" id="setCancel">取消</button>
     <button type="button" class="pill primary" id="setApply">套用，重新出題</button>
+  </div>
+</dialog>
+
+<dialog id="whoDlg" aria-labelledby="whoTitle">
+  <div class="dlg">
+    <div class="dlg-head">
+      <h2 id="whoTitle"></h2>
+      <button type="button" class="icon-btn" id="whoClose" aria-label="關閉">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div class="who-grid" id="whoGrid"></div>
+    <form id="whoForm" class="who-form" hidden>
+      <input id="whoName" type="text" maxlength="12" placeholder="名字" autocomplete="off" required>
+      <button type="submit" class="pill primary sm">好</button>
+      <button type="button" class="pill sm" id="whoNewCancel">取消</button>
+    </form>
+    <p class="help" id="whoHelp">每個人有自己的設定和紀錄，都只存在這台裝置上。</p>
+    <button type="button" class="link-btn" id="whoManage">改名或刪除</button>
   </div>
 </dialog>
 
@@ -656,12 +698,32 @@ function normalize(c) {
     sound: c.sound !== false,
   };
 }
-function loadCfg() {
-  try { return normalize(JSON.parse(localStorage.getItem(LS_CFG) || "null")); }
-  catch (e) { return normalize(null); }
+/* ── 誰在玩（profile）──
+   每個人：{ id, name, color, cfg, hist }，全部存在這台裝置的 localStorage。
+   「目前的設定 cfg」和「紀錄」都是目前這個人的；換人就換整組。
+   LS_CFG / LS_HIST 是沒有 profile 之前的舊格式，第一次建人時搬進去。 */
+const LS_PROF = "kidzMath.bond.profiles.v1";
+const PALETTE = ["#3484c9", "#e3842a", "#2a9a57", "#c0574a", "#8e5ac8", "#d4a017"];
+let store = loadStore();
+function loadStore() {
+  try { const s = JSON.parse(localStorage.getItem(LS_PROF) || "null"); if (s && Array.isArray(s.list)) return s; } catch (e) {}
+  return { active: null, list: [] };
 }
+function saveStore() { try { localStorage.setItem(LS_PROF, JSON.stringify(store)); } catch (e) {} }
+const activeProfile = () => store.list.find(p => p.id === store.active) || null;
 function saveCfg() {
-  try { localStorage.setItem(LS_CFG, JSON.stringify(cfg)); } catch (e) {}
+  const p = activeProfile();
+  if (p) { p.cfg = cfg; saveStore(); }
+}
+/** 舊格式（沒有 profile 時存的設定與紀錄）拿出來給第一個建立的人，拿完就刪 */
+function takeLegacy() {
+  let c = null, h = null;
+  try {
+    c = JSON.parse(localStorage.getItem(LS_CFG) || "null");
+    h = JSON.parse(localStorage.getItem(LS_HIST) || "null");
+    localStorage.removeItem(LS_CFG); localStorage.removeItem(LS_HIST);
+  } catch (e) {}
+  return { cfg: c ? normalize(c) : null, hist: Array.isArray(h) ? h : null };
 }
 
 const sameSet = (a, b) => a.length === b.length && a.every(x => b.includes(x));
@@ -735,7 +797,8 @@ const BPMF_CHARS = {
   "玩":"ㄨㄢˊ","練":"ㄌㄧㄢˋ","習":"ㄒㄧˊ","全":"ㄑㄩㄢˊ","部":"ㄅㄨˋ",
   "在":"ㄗㄞˋ","格":"ㄍㄜˊ","裡":"ㄌㄧˇ","填":"ㄊㄧㄢˊ","上":"ㄕㄤˋ","正":"ㄓㄥˋ","確":"ㄑㄩㄝˋ","的":"˙ㄉㄜ",
   "姓":"ㄒㄧㄥˋ","名":"ㄇㄧㄥˊ","日":"ㄖˋ","期":"ㄑㄧˊ",
-  "時":"ㄕˊ","間":"ㄐㄧㄢ","到":"ㄉㄠˋ","鐘":"ㄓㄨㄥ"
+  "時":"ㄕˊ","間":"ㄐㄧㄢ","到":"ㄉㄠˋ","鐘":"ㄓㄨㄥ",
+  "誰":"ㄕㄟˊ","新":"ㄒㄧㄣ","增":"ㄗㄥ","換":"ㄏㄨㄢˋ","人":"ㄖㄣˊ"
 };
 
 /** 把一段文字切成 [字, 注音|null]；詞優先，最長比對 */
@@ -933,10 +996,11 @@ function makeChoices(p) {
    答錯第 3 次：直接告訴答案（附圓點），按「下一題」繼續 —— 不讓小孩卡死在一題。
    ═══════════════════════════════════════════════════════════════ */
 const $ = id => document.getElementById(id);
-let cfg = loadCfg();
+let cfg = activeProfile() ? normalize(activeProfile().cfg) : normalize(null);
+let pendingURLCfg = null;                        // 還沒有人的時候網址帶來的設定，給第一個建立的人
 {
   const fromURL = cfgFromURL(cfg);
-  if (fromURL) { cfg = fromURL; saveCfg(); }
+  if (fromURL) { cfg = fromURL; if (activeProfile()) saveCfg(); else pendingURLCfg = fromURL; }
 }
 
 const PRAISE = ["答對了！", "好棒！", "太厲害了！"];
@@ -1069,6 +1133,9 @@ function renderAll() {
   renderInput();
 }
 function renderHeader() {
+  const p = activeProfile();
+  $("whoLabel").textContent = p ? p.name : "誰在玩？";
+  $("whoDot").style.background = p ? p.color : "";
   $("subLabel").textContent = roundLabel(cfg);
   $("tglBpmf").setAttribute("aria-pressed", String(cfg.bpmf));
   $("tglSound").setAttribute("aria-pressed", String(cfg.sound));
@@ -1153,11 +1220,14 @@ function renderDone(ms) {
    7. 紀錄（這台裝置）
    ═══════════════════════════════════════════════════════════════ */
 function loadHist() {
-  try { const h = JSON.parse(localStorage.getItem(LS_HIST) || "[]"); return Array.isArray(h) ? h : []; }
-  catch (e) { return []; }
+  const p = activeProfile();
+  return p && Array.isArray(p.hist) ? p.hist : [];
 }
 function saveHistory(entry) {
-  try { localStorage.setItem(LS_HIST, JSON.stringify([entry, ...loadHist()].slice(0, 200))); } catch (e) {}
+  const p = activeProfile();
+  if (!p) return;
+  p.hist = [entry, ...loadHist()].slice(0, 200);
+  saveStore();
 }
 function fmtWhen(t) {
   const d = new Date(t), z = v => String(v).padStart(2, "0");
@@ -1168,7 +1238,8 @@ function fmtDur(ms) {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 }
 function renderHist() {
-  const h = loadHist();
+  const h = loadHist(), p = activeProfile();
+  $("histTitle").textContent = p ? `最近紀錄（${p.name}）` : "最近紀錄";
   $("hist").innerHTML = h.length
     ? `<thead><tr><th>時間</th><th>題型</th><th>一次就對</th><th>用時</th></tr></thead><tbody>${
         h.slice(0, 50).map(r => `<tr><td>${fmtWhen(r.t)}</td><td class="lbl">${esc(r.label)}</td><td class="num">${r.first} / ${r.n}</td><td class="num">${fmtDur(r.ms)}</td></tr>`).join("")}</tbody>`
@@ -1294,7 +1365,7 @@ function renderSheets() {
 function sheetHTML(list, offset, pageNo) {
   return `<section class="sheet">
     <div class="sh-head"><div class="sh-title">${bp("數字好朋友")}<span class="sh-sub">${esc(describe(cfg))}</span></div></div>
-    <div class="sh-fields"><span>${bp("姓名")}<i class="fl"></i></span><span>${bp("日期")}<i class="fl"></i></span><span>${bp("答對")}<i class="fl short"></i>${bp("題")}</span></div>
+    <div class="sh-fields"><span>${bp("姓名")}<i class="fl">${esc(activeProfile()?.name || "")}</i></span><span>${bp("日期")}<i class="fl"></i></span><span>${bp("答對")}<i class="fl short"></i>${bp("題")}</span></div>
     <div class="sh-inst">${bp("在空格裡填上正確的數字。")}</div>
     <div class="sh-grid">${list.map((p, i) => `<div class="sh-cell"><span class="qn">${offset + i + 1}</span>${bondSVG(p)}</div>`).join("")}</div>
     <div class="sh-foot">卷號 ${pv.seed} · 第 ${pageNo} 頁，共 ${pv.pages} 頁</div>
@@ -1400,9 +1471,90 @@ $("copyLink").addEventListener("click", async () => {
   setTimeout(() => { $("copyLink").textContent = "複製"; }, 1500);
 });
 $("clearHist").addEventListener("click", () => {
-  if (!confirm("確定要清除這台裝置上的所有紀錄嗎？")) return;
-  try { localStorage.removeItem(LS_HIST); } catch (e) {}
+  const p = activeProfile();
+  if (!p || !confirm(`確定要清除「${p.name}」的所有紀錄嗎？`)) return;
+  p.hist = [];
+  saveStore();
   renderHist();
+});
+
+/* ═══════════════════════════════════════════════════════════════
+   11. 誰在玩（profile 畫面）
+   ═══════════════════════════════════════════════════════════════ */
+const who = { manage: false };
+function openWho(force) {
+  who.manage = false;
+  $("whoForm").hidden = store.list.length > 0;   // 一個人都沒有：直接顯示輸入框
+  if (!store.list.length) $("whoName").value = "";
+  renderWho();
+  pauseTimer();
+  $("whoDlg").showModal();
+  if (!store.list.length) $("whoName").focus();
+}
+function renderWho() {
+  const adding = !$("whoForm").hidden;
+  $("whoTitle").innerHTML = bp("誰在玩？");
+  $("whoClose").hidden = !store.list.length;      // 還沒有人就不能關
+  $("whoNewCancel").hidden = !store.list.length;  // 沒有人可以退回去，取消沒意義
+  $("whoManage").hidden = !store.list.length;
+  $("whoManage").textContent = who.manage ? "完成" : "改名或刪除";
+  $("whoGrid").innerHTML = store.list.map(p => who.manage
+    ? `<div class="who" aria-current="${p.id === store.active}"><span class="av" style="background:${p.color}">${esc(p.name.slice(0, 1))}</span><span>${esc(p.name)}</span>
+         <span class="ops"><button type="button" class="chip" data-rename="${p.id}">改名</button><button type="button" class="chip" data-del="${p.id}">刪除</button></span></div>`
+    : `<button type="button" class="who" data-pick="${p.id}" aria-current="${p.id === store.active}"><span class="av" style="background:${p.color}">${esc(p.name.slice(0, 1))}</span><span>${esc(p.name)}</span></button>`
+  ).join("") + (who.manage || adding ? "" : `<button type="button" class="who add" id="whoAdd"><span class="av">＋</span><span>${bp("新增")}</span></button>`);
+}
+function addProfile(name) {
+  const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  const legacy = store.list.length ? { cfg: null, hist: null } : takeLegacy();
+  const p = { id, name, color: PALETTE[store.list.length % PALETTE.length], cfg: legacy.cfg || pendingURLCfg || normalize(null), hist: legacy.hist || [] };
+  pendingURLCfg = null;
+  store.list.push(p);
+  switchTo(id);
+  return p;
+}
+function switchTo(id) {
+  const p = store.list.find(x => x.id === id);
+  if (!p) return;
+  store.active = id;
+  saveStore();
+  cfg = normalize(p.cfg);
+  if ($("whoDlg").open) $("whoDlg").close();
+  newRound();
+}
+function removeProfile(id) {
+  store.list = store.list.filter(p => p.id !== id);
+  if (store.active === id) store.active = store.list[0] ? store.list[0].id : null;
+  saveStore();
+  if (store.active) { cfg = normalize(activeProfile().cfg); newRound(); }
+  else { cfg = normalize(null); renderAll(); }
+}
+$("btnWho").addEventListener("click", () => openWho(false));
+$("whoClose").addEventListener("click", () => $("whoDlg").close());
+$("whoDlg").addEventListener("cancel", e => { if (!store.list.length) e.preventDefault(); });   // 還沒有人：Esc 也關不掉
+$("whoDlg").addEventListener("close", resumeTimer);
+$("whoDlg").addEventListener("click", e => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  if (b.dataset.pick) switchTo(b.dataset.pick);
+  else if (b.id === "whoAdd") { $("whoForm").hidden = false; $("whoName").value = ""; renderWho(); $("whoName").focus(); }
+  else if (b.dataset.rename) {
+    const p = store.list.find(x => x.id === b.dataset.rename);
+    const name = (prompt("新的名字", p.name) || "").trim();
+    if (name) { p.name = name; saveStore(); renderWho(); renderHeader(); }
+  } else if (b.dataset.del) {
+    const p = store.list.find(x => x.id === b.dataset.del);
+    if (confirm(`確定要刪除「${p.name}」和他的紀錄嗎？`)) { removeProfile(p.id); who.manage = false; if (!store.list.length) { $("whoForm").hidden = false; } renderWho(); renderHeader(); }
+  }
+});
+$("whoManage").addEventListener("click", () => { who.manage = !who.manage; $("whoForm").hidden = true; renderWho(); });
+$("whoNewCancel").addEventListener("click", () => { if (store.list.length) { $("whoForm").hidden = true; renderWho(); } });
+$("whoForm").addEventListener("submit", e => {
+  e.preventDefault();
+  const name = $("whoName").value.trim();
+  if (!name) return;
+  $("whoForm").hidden = true;
+  addProfile(name);
 });
 
 /* 練習單 */
@@ -1422,6 +1574,7 @@ window.addEventListener("resize", () => { if (!$("printView").hidden) fitSheets(
 window.addEventListener("beforeprint", () => { if ($("printView").hidden) openPrint(); });
 
 newRound();
-if (location.hash === "#print") openPrint();</script>
+if (location.hash === "#print") openPrint();
+else if (!activeProfile()) openWho(true);        // 第一次：先問名字</script>
 </body>
 </html>
