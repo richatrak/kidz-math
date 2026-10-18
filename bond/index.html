@@ -93,7 +93,8 @@ rt { font-size: .46em; font-weight: 400; letter-spacing: -.06em; opacity: .75; f
 }
 body.printing .app { display: none; }
 
-header.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+header.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }   /* 放不下就讓按鈕列換到第二行 */
+.tools { margin-left: auto; }
 .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .brand > svg { width: 38px; height: 38px; flex: none; }
 .brand-txt { min-width: 0; }
@@ -112,11 +113,23 @@ header.top { display: flex; align-items: center; justify-content: space-between;
 /* 手機：按鈕只留圖示並縮窄，標題才排得下一行 */
 @media (max-width: 600px) {
   .tbtn span { display: none; }
-  .tbtn { height: 38px; padding: 0 8px; min-width: 38px; justify-content: center; }
+  .tbtn { height: 36px; padding: 0 7px; min-width: 36px; justify-content: center; }
   .tools { gap: 4px; }
+  .who-chip b { max-width: 4em; }
   .brand > svg { display: none; }               /* 名牌佔掉的寬度從圖示拿回來，標題才不會被截掉 */
   .brand h1 { font-size: 17px; white-space: nowrap; }
 }
+@media (max-width: 400px) {                     /* iPhone SE 375px：六顆按鈕約 250px，標題只剩 80 多 px */
+  header.top { gap: 6px; }
+  .tbtn { height: 34px; min-width: 34px; padding: 0 6px; }
+  .tools { gap: 3px; }
+  .who-chip { padding: 0 9px 0 8px; }
+  .who-chip b { max-width: 3.5em; }
+  .brand h1 { font-size: 15px; letter-spacing: 0; }
+  .brand .sub { font-size: 11.5px; }
+}
+.brand-txt { overflow: hidden; }
+.brand h1 { overflow: hidden; text-overflow: ellipsis; }   /* 真的放不下就 …，不要硬切半個字 */
 
 /* ═══════════════════ 作答畫面 ═══════════════════ */
 main.play { flex: 1; display: grid; gap: 14px 32px; align-content: start; justify-items: center; }
@@ -152,7 +165,9 @@ main.play { flex: 1; display: grid; gap: 14px 32px; align-content: start; justif
 .bond-svg .n  { font-family: var(--num); font-weight: 900; fill: var(--ink); }
 .bond-svg .op { font-family: var(--num); font-weight: 800; fill: var(--ink-2); }
 .bond-svg .blank > rect:first-child { fill: var(--blank); stroke: var(--blank-line); stroke-dasharray: 11 7; }
-.bond-svg .caret { fill: var(--blank-line); animation: blink 1.1s steps(1) infinite; }
+/* 空格裡放問號，不放閃爍游標：游標不閃的那一瞬間會被小孩看成 1 */
+.bond-svg .ask { fill: var(--blank-line); font-family: var(--num); font-weight: 900; animation: breathe 1.6s ease-in-out infinite; }
+@keyframes breathe { 50% { opacity: .45; } }
 .bond-svg .blank.ok > rect:first-child { fill: var(--ok-soft); stroke: var(--ok); stroke-dasharray: none; }
 .bond-svg .blank.ok .n { fill: var(--ok); }
 .bond-svg .blank.ok { animation: pop .38s ease-out; }
@@ -166,7 +181,6 @@ main.play { flex: 1; display: grid; gap: 14px 32px; align-content: start; justif
 .bond-svg .t-R > rect:first-child { stroke: var(--c-R); stroke-width: 5; }
 .bond-svg .t-T > rect:first-child { stroke: var(--c-T); stroke-width: 5; }
 .bond-svg .t-X > rect:first-child { stroke: var(--c-X); stroke-width: 5; }
-@keyframes blink { 50% { opacity: 0; } }
 @keyframes pop   { 0% { transform: scale(1); } 45% { transform: scale(1.12); } 100% { transform: scale(1); } }
 @keyframes shake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-9px); } 40% { transform: translateX(8px); } 60% { transform: translateX(-6px); } 80% { transform: translateX(4px); } }
 
@@ -406,6 +420,9 @@ dialog::backdrop { background: rgba(18, 24, 20, .5); }
       </button>
       <button class="tbtn" id="btnSet" type="button" title="設定">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg><span>設定</span>
+      </button>
+      <button class="tbtn" id="btnReload" type="button" title="重新載入（加到主畫面後沒有網址列可以重新整理）">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg>
       </button>
     </div>
   </header>
@@ -850,7 +867,7 @@ function tintOf(p) {
   return {};
 }
 
-/** o.fill：空格裡顯示的字；o.state：'' | ok | bad | reveal；o.caret：顯示游標；o.tint：提示染色 */
+/** o.fill：空格裡顯示的字；o.state：'' | ok | bad | reveal；o.ask：空格裡放問號（作答畫面用，練習單留白）；o.tint：提示染色 */
 function bondSVG(p, o = {}) {
   const tint = o.tint ? tintOf(p) : {};
   let s = `<svg class="bond-svg" viewBox="0 0 300 250" role="img" aria-label="${esc(bondLabel(p, o.fill))}">`;
@@ -862,7 +879,7 @@ function bondSVG(p, o = {}) {
     const cls = ["bx", blank && "blank", blank && o.state, tint[pos] && "t-" + tint[pos]].filter(Boolean).join(" ");
     s += `<g class="${cls}"><rect x="${x}" y="${y}" width="${BOX}" height="${BOX}" rx="14"/>`;
     if (txt) s += `<text class="n" x="${x + BOX / 2}" y="${y + BOX / 2 + 2}" font-size="${numSize(txt)}" text-anchor="middle" dominant-baseline="central">${esc(txt)}</text>`;
-    else if (blank && o.caret) s += `<rect class="caret" x="${x + BOX / 2 - 2}" y="${y + 23}" width="4" height="40" rx="2"/>`;
+    else if (blank && o.ask) s += `<text class="ask" x="${x + BOX / 2}" y="${y + BOX / 2 + 2}" font-size="54" text-anchor="middle" dominant-baseline="central">?</text>`;
     s += `</g>`;
   }
   s += `<text class="op" x="150" y="205" font-size="50" text-anchor="middle" dominant-baseline="central">${OPS[p.op].sym}</text>`;
@@ -1171,7 +1188,7 @@ function renderBond() {
   }
   $("bond").innerHTML = bondSVG(p, {
     fill: play.input, state: play.state, tint: play.hint,
-    caret: play.state === "" && play.input === "",
+    ask: play.state === "" && play.input === "",
   });
 }
 function renderHint() {
@@ -1429,6 +1446,9 @@ $("choices").addEventListener("click", e => {
   renderBond();
   submit();
 });
+
+/* 重新載入：加到主畫面的 App 沒有網址列，改版後要靠這顆拿到新版 */
+$("btnReload").addEventListener("click", () => location.reload());
 
 /* 設定 */
 $("btnSet").addEventListener("click", openSettings);
