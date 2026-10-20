@@ -42,11 +42,18 @@ section { margin-top: 30px; }
 h2 { margin: 0 0 12px; font-size: 14px; font-weight: 700; color: var(--ink-2); letter-spacing: .12em; display: flex; align-items: center; gap: 10px; }
 h2::after { content: ""; flex: 1; height: 1px; background: var(--line); }
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
-a.card {
+.card {
   display: block; padding: 16px 18px 14px; border-radius: 18px; color: inherit; text-decoration: none;
   background: var(--surface); border: 1.5px solid var(--line); box-shadow: var(--shadow);
   transition: transform .08s, border-color .08s;
 }
+/* 乘法表分段：一排 2～9 的小方塊，各自是一個連結 */
+.tbl { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.tbl a {
+  display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 12px;
+  background: var(--tag); color: var(--tag-ink); font: 900 20px var(--num); text-decoration: none;
+}
+.tbl a:hover, .tbl a:focus-visible { background: var(--accent); color: var(--accent-ink); outline: none; }
 a.card:hover, a.card:focus-visible { transform: translateY(-2px); border-color: var(--accent); outline: none; }
 a.card:active { transform: translateY(1px); }
 .card b { display: block; font-size: 21px; font-weight: 900; line-height: 1.4; }
@@ -110,10 +117,19 @@ footer a { color: var(--ink-2); }
   <section>
     <h2>二年級</h2>
     <div class="cards">
+      <div class="card">
+        <b>一次背一個</b>
+        <div class="ex">2 × 7 = ?</div>
+        <span class="d">小孩通常一天背一個。選一個數字，就只出它的乘法；背完再回「九九乘法」綜合複習。</span>
+        <div class="tbl">
+          <a href="bond/index.html?preset=mul99&tables=2">2</a><a href="bond/index.html?preset=mul99&tables=3">3</a><a href="bond/index.html?preset=mul99&tables=4">4</a><a href="bond/index.html?preset=mul99&tables=5">5</a><a href="bond/index.html?preset=mul99&tables=6">6</a><a href="bond/index.html?preset=mul99&tables=7">7</a><a href="bond/index.html?preset=mul99&tables=8">8</a><a href="bond/index.html?preset=mul99&tables=9">9</a>
+        </div>
+        <span class="app">數字好朋友</span>
+      </div>
       <a class="card" href="bond/index.html?preset=mul99">
         <b>九九乘法</b>
         <div class="ex">6 × 7 = ?</div>
-        <span class="d">1 到 9 的乘法，空格也可能在下面（幾乘 7 等於 42）。</span>
+        <span class="d">2 到 9 全部混著出，綜合複習用。空格也可能在下面（幾乘 7 等於 42）。</span>
         <span class="app">數字好朋友</span>
       </a>
     </div>

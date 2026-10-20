@@ -486,6 +486,12 @@ dialog::backdrop { background: rgba(18, 24, 20, .5); }
       <div class="chips" id="opsBox"></div>
     </section>
 
+    <section id="tablesSec" hidden>
+      <h3>乘法表（乘法、除法用）</h3>
+      <div class="chips" id="tablesBox"></div>
+      <p class="help">小孩通常一天背一個：先選一個練（例如「2」就只出 2 × 幾），背完再選「全部」綜合複習。可以複選。</p>
+    </section>
+
     <section>
       <h3>數字範圍</h3>
       <div class="rng"><span>上面的數</span><input id="topMin" type="number" inputmode="numeric" min="0" max="999" required><span>到</span><input id="topMax" type="number" inputmode="numeric" min="0" max="999" required></div>
@@ -600,9 +606,13 @@ const PRESETS = [
   { id: "ten",   name: "10 的好朋友", ops: ["+"],      top: [10, 10], bottom: [1, 9],  blanks: ["left", "right"] },
   { id: "add20", name: "20 以內加法", ops: ["+"],      top: [0, 20],  bottom: [1, 20], blanks: POS },
   { id: "pm20",  name: "20 以內加減", ops: ["+", "-"], top: [0, 20],  bottom: [1, 20], blanks: POS },
-  { id: "mul99", name: "九九乘法",    ops: ["*"],      top: [0, 81],  bottom: [1, 9],  blanks: POS },
+  // 2 起不是 1 起：含 1 的組合佔 1～9 題庫的 21%，而且 ×1 根本不用背（2026-10-20 Erika 回饋「好常出現 1」）
+  { id: "mul99", name: "九九乘法",    ops: ["*"],      top: [0, 81],  bottom: [2, 9],  blanks: POS },
 ];
-const presetCfg = p => ({ ops: [...p.ops], top: [...p.top], bottom: [...p.bottom], blanks: [...p.blanks] });
+/* tables：乘法表分段，[] = 全部。[2] 就只出「2 的」：× 時左下固定在表裡、÷ 時右下（除數）在表裡。
+   小孩通常一天背一個，所以要能一個一個練，最後再「全部」綜合複習。 */
+const presetCfg = p => ({ ops: [...p.ops], top: [...p.top], bottom: [...p.bottom], blanks: [...p.blanks], tables: [] });
+const TABLES = [2, 3, 4, 5, 6, 7, 8, 9];
 const MODES = { pad: "數字鍵盤", choice: "選擇題" };
 const DEFAULTS = { ...presetCfg(PRESETS[0]), count: 10, timed: 0, mode: "pad", bpmf: true, sound: true };
 
@@ -613,6 +623,8 @@ function buildPool(s) {
     const f = OPS[op].calc, list = [];
     for (let a = s.bottom[0]; a <= s.bottom[1]; a++) {
       for (let b = s.bottom[0]; b <= s.bottom[1]; b++) {
+        if (s.tables.length && op === "*" && !s.tables.includes(a)) continue;   // 「2 的乘法」＝ 2 × ?
+        if (s.tables.length && op === "/" && !s.tables.includes(b)) continue;   // 「2 的除法」＝ ? ÷ 2
         const t = f(a, b);
         if (t === null || t < s.top[0] || t > s.top[1]) continue;
         for (const blank of s.blanks) {
@@ -708,6 +720,7 @@ function normalize(c) {
     top: range(c.top, d.top),
     bottom: range(c.bottom, d.bottom),
     blanks: blanks.length ? blanks : d.blanks,
+    tables: Array.isArray(c.tables) ? [...new Set(c.tables.map(Number).filter(n => Number.isInteger(n) && n >= 1 && n <= 9))].sort((x, y) => x - y) : [],
     count: COUNTS.includes(c.count) ? c.count : d.count,
     timed: TIMES.includes(c.timed) ? c.timed : 0,
     mode: MODES[c.mode] ? c.mode : d.mode,
@@ -756,7 +769,10 @@ function opsLabel(ops) {
 }
 function describe(s) {
   const p = matchPreset(s);
-  return p ? p.name : `${opsLabel(s.ops)}（上面 ${s.top[0]} 到 ${s.top[1]}、下面 ${s.bottom[0]} 到 ${s.bottom[1]}）`;
+  const base = p ? p.name : `${opsLabel(s.ops)}（上面 ${s.top[0]} 到 ${s.top[1]}、下面 ${s.bottom[0]} 到 ${s.bottom[1]}）`;
+  if (!s.tables.length || !s.ops.some(k => k === "*" || k === "/")) return base;
+  const t = s.tables.join("、");
+  return p && p.id === "mul99" ? `${t} 的乘法` : `${base}（乘法表 ${t}）`;
 }
 
 /** 網址有帶設定就用網址的（入口頁的連結、別台裝置傳來的連結）；沒有就回傳 null */
@@ -776,6 +792,8 @@ function cfgFromURL(base) {
   if (bottom) take().bottom = bottom;
   const blank = q.get("blank");
   if (blank) take().blanks = POS.filter(k => blank.includes(POS_URL[k]));
+  const tb = q.get("tables");                    // tables=2 或 tables=2,3（放在 preset 之後，才能疊在「九九乘法」上）
+  if (tb !== null) take().tables = tb.split(",").map(Number);
   const n = Number(q.get("n"));
   if (COUNTS.includes(n)) take().count = n;
   return s ? normalize(s) : null;
@@ -790,6 +808,7 @@ function cfgToURL(s) {
     q.set("bottom", s.bottom.join("-"));
     q.set("blank", s.blanks.map(k => POS_URL[k]).join(""));
   }
+  if (s.tables.length) q.set("tables", s.tables.join(","));
   if (s.count !== DEFAULTS.count) q.set("n", s.count);
   if (s.timed) q.set("t", s.timed);
   return location.href.split(/[?#]/)[0] + "?" + q.toString();
@@ -1281,6 +1300,9 @@ function renderForm() {
     `<button type="button" class="chip" data-preset="${p.id}" aria-pressed="${pre === p}">${esc(p.name)}</button>`).join("");
   $("opsBox").innerHTML = OP_ORDER.map(k =>
     `<button type="button" class="chip" data-op="${k}" aria-pressed="${draft.ops.includes(k)}"><span class="sym">${OPS[k].sym}</span>${OPS[k].name}法</button>`).join("");
+  $("tablesSec").hidden = !draft.ops.some(k => k === "*" || k === "/");
+  $("tablesBox").innerHTML = `<button type="button" class="chip" data-table="all" aria-pressed="${!draft.tables.length}">全部</button>` +
+    TABLES.map(n => `<button type="button" class="chip" data-table="${n}" aria-pressed="${draft.tables.includes(n)}">${n}</button>`).join("");
   $("blanksBox").innerHTML = POS.map(k =>
     `<button type="button" class="chip" data-blank="${k}" aria-pressed="${draft.blanks.includes(k)}">${POS_NAME[k]}</button>`).join("");
   $("countBox").innerHTML = COUNTS.map(n =>
@@ -1467,6 +1489,9 @@ $("setDlg").addEventListener("click", e => {
     renderForm();
   } else if (b.dataset.blank) {
     draft.blanks = POS.filter(k => toggle(draft.blanks, b.dataset.blank).includes(k));
+    renderForm();
+  } else if (b.dataset.table) {
+    draft.tables = b.dataset.table === "all" ? [] : toggle(draft.tables, Number(b.dataset.table)).sort((x, y) => x - y);
     renderForm();
   } else if (b.dataset.count) {
     draft.count = Number(b.dataset.count);
